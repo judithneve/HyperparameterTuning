@@ -1,0 +1,34 @@
+---
+title: "Proposal plot"
+author: "Judith Neve"
+date: '2022-10-03'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+RFclass <- data.frame("OptimisationAlgorithm" = c("Default", "Grid search", "Random search", "BO-GP", "BO-TPE", "Hyperband", "BOHB", "GA", "PSO"),
+                      "Category" = c("Default", "Model-free", "Model-free", "Bayesian optimisation", "Bayesian optimisation", "Multifidelity", "Multifidelity", "Metaheuristic", "Metaheuristic"),
+                 "Accuracy" = c(90.65, 93.32, 93.38, 93.38, 93.88, 93.38, 90.38, 93.83, 93.73),
+                 "CompTime" = c(0.09, 48.62, 16.73, 20.60, 12.58, 8.89, 8.45, 19.19, 12.43))
+```
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+RFclass %>%
+  ggplot(aes(y = Accuracy, x = CompTime, col = Category)) +
+  geom_point(size = 3) +
+  labs(x = "Computational time (in seconds)",
+       y = "Accuracy (%)") +
+  theme_minimal() +
+  labs(col = "Algorithm category",
+       title = "Figure 1. Accuracy VS computational time for different\nhyperparameter tuning algorithms")
+
+ggsave("figure1.jpg", width = 7, height = 3)
+```
+
