@@ -27,7 +27,9 @@ RFclass %>%
        y = "Accuracy (%)") +
   theme_minimal() +
   labs(col = "Algorithm category",
-       title = "Figure 1. Accuracy VS computational time for different\nhyperparameter tuning algorithms")
+       title = "Figure 1. Accuracy VS computational time for different\nhyperparameter tuning algorithms",
+       caption = "Adapted from Yang & Shami (2020)") +
+  theme(plot.caption = element_text(hjust = 1.65))
 
 ggsave("figure1.jpg", width = 7, height = 3)
 ```
