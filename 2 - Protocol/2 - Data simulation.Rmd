@@ -7,30 +7,72 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+library(MASS)
+library(dplyr)
 ```
 
 Load the table with the scenarios
 
 ```{r}
-
+scenarios <- read.csv("DataScenarios.csv") %>%
+  mutate(n = ceiling(n))
 ```
 
-Predictor values sampled from a standard multivariate normal distribution.
+## Simulate data
 
 ```{r}
-
+dat  <- list()
+nsim <- 10     # TODO: change this to 1000
 ```
-
-Predictor effects: intercept and effects set to ensure an AUC of 0.8 (can change this value)
 
 ```{r}
+set.seed(0070661)
 
+for (i in 1:nrow(scenarios)) {
+  dat[[i]]         <- list()
+  sample_size_temp <- scenarios$n[i]
+  n_pred_temp      <- scenarios$n_pred[i]
+  names(dat)[i]    <- paste0(                                # TODO: better way to keep a note of the scenario?
+    "n_pred = ",           n_pred_temp,
+    ", event_fraction = ", scenarios$event_fraction[i],
+    ", prop_min_n = ",        scenarios$prop_min_n[i]
+    )
+  
+  for (j in 1:nsim) {
+    
+    dat_temp <- matrix(
+      NA,
+      nrow = sample_size_temp,
+      ncol = n_pred_temp + 1
+      ) %>%
+      as.data.frame()
+    colnames(dat_temp) <- c(paste0("X", 1:n_pred_temp), "Y")
+    
+    X <- mvrnorm(
+      n = sample_size_temp,
+      mu = rep(0, n_pred_temp),
+      Sigma = diag(1, n_pred_temp)                               # TODO: should I include covariance??
+      )
+    
+    dat_temp[,1:n_pred_temp] <- X
+    X <- cbind(1, X) %>% as.matrix()
+  
+    beta <- runif(n_pred_temp + 1, -5, 5)                       # TODO: how do I set this and this intercept to ensure an AUC of 0.8 (or some other number)
+                                                                # TODO: should I simulate new parameters for each dataset? or for each scenario?
+                                                                #       I assume this is calculated using the event fraction? How?
+    
+    prob <- exp(X %*% beta) / (1 + exp(X %*% beta))
+    dat_temp$Y <- rbinom(sample_size_temp, 1, prob)
+    
+    dat[[i]][[j]] <- dat_temp
+  }
+}
 ```
 
-
-Sample binary outcome: bernoulli conditional on predictor values & true predictor effects
+Save the data
 
 ```{r}
-
+saveRDS(dat, file = "SimData.RData")
 ```
+
 
