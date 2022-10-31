@@ -8,6 +8,8 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(magrittr)
+library(pmsampsize)
+library(tidyr)
 ```
 
 We will generate data under a logistic regression model with strong interactions.
@@ -25,8 +27,6 @@ event_fraction <- c(0.1, 0.3, 0.5)
 Minimum sample size calculation based on Riley et al., 2020
 
 ```{r}
-library(pmsampsize)
-
 req_n <- data.frame(
   n_pred         = rep(n_pred,         each  = length(event_fraction)),
   event_fraction = rep(event_fraction, times = length(n_pred)),
@@ -39,11 +39,13 @@ for (p in n_pred) {
       type = "b",
       parameters = p,
       prevalence = ef,
-      cstatistic = 0.8                 # what's realistic??
+      cstatistic = 0.8                 # TODO: what's realistic??
       )$sample_size
   }
 }
 ```
+
+Manipulate the sample sizes.
 
 ```{r}
 sample_size <- c(0.5, 1, 2)
@@ -55,15 +57,22 @@ n_cols <- matrix(
 ) %>%
   as.data.frame()
 
-colnames(n_cols) <- paste0("n_", sample_size)
+colnames(n_cols) <- sample_size
 
 for (j in 1:length(sample_size)) {
   n_cols[,j] <- req_n$req_n * sample_size[j]
 }
 ```
 
+Combine the info into one table to have one row per scenario
+
 ```{r}
-scenarios <- cbind(req_n[,-3], n_cols)
+scenarios <- cbind(req_n[,-3], n_cols) %>%
+  pivot_longer(
+    `0.5`:`2`,
+    names_to = "prop_min_n",
+    values_to = "n"
+    )
 ```
 
 ```{r}
