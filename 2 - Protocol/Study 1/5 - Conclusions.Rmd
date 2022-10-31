@@ -1,0 +1,35 @@
+---
+title: "Comparisons"
+author: "Judith Neve"
+date: '2022-10-31'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Load data.
+
+```{r}
+
+```
+
+Summary tables
+
+```{r}
+
+```
+
+Conclude: we take x set of hyperparameters to tune in following studies.
+
+```{r}
+
+```
+
+Save data?
+
+```{r}
+
+```
+
