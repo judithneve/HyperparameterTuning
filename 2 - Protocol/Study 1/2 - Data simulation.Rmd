@@ -55,12 +55,14 @@ for (i in 1:nrow(scenarios)) {
       )
     
     dat_temp[,1:n_pred_temp] <- X
+    
+    ### TODO: include interactions ###
     X <- cbind(1, X) %>% as.matrix()
   
     beta <- runif(n_pred_temp + 1, -5, 5)                       # TODO: how do I set this and this intercept to ensure an AUC of 0.8 (or some other number)
                                                                 # TODO: should I simulate new parameters for each dataset? or for each scenario?
                                                                 #       I assume this is calculated using the event fraction? How?
-    
+    ##################################
     prob <- exp(X %*% beta) / (1 + exp(X %*% beta))
     dat_temp$Y <- rbinom(sample_size_temp, 1, prob)
     
