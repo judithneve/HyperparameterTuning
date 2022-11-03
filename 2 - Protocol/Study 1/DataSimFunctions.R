@@ -8,15 +8,14 @@
 # Minimum sample size calculation based on Riley et al., 2020
 
 make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
-  req_n <- data.frame(
-    n_pred         = rep(n_pred,         each  = length(event_fraction)),
-    event_fraction = rep(event_fraction, times = length(n_pred)),
-    req_n          = rep(NA, length(n_pred)*length(event_fraction))
+  scenarios <- cbind(
+    expand.grid(n_pred = n_pred, event_fraction = event_fraction, prop_sample_size = sample_size),
+    n = NA
   )
   
   for (p in n_pred) {
     for (ef in event_fraction) {
-      req_n$req_n[(req_n$n_pred) == p & (req_n$event_fraction == ef)] <- pmsampsize(
+      scenarios$n[(scenarios$n_pred == p) & (scenarios$event_fraction == ef)] <- pmsampsize(
         type = "b",
         parameters = p,
         prevalence = ef,
@@ -24,27 +23,9 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
       )$sample_size
     }
   }
-  
-  n_cols <- matrix(
-    NA,
-    nrow = nrow(req_n),
-    ncol = length(sample_size)
-  ) %>%
-    as.data.frame()
-  
-  colnames(n_cols) <- sample_size
-  
-  for (j in 1:length(sample_size)) {
-    n_cols[,j] <- req_n$req_n * sample_size[j]
-  }
 
-  scenarios <- cbind(req_n[,-3], n_cols) %>%
-    pivot_longer(
-      `0.5`:`2`,
-      names_to = "prop_min_n",
-      values_to = "n"
-    ) %>% 
-    mutate(n = ceiling(n))
+  scenarios <- scenarios %>% 
+    mutate(n = ceiling(n*prop_sample_size))
   
   return(scenarios)
 }

@@ -25,7 +25,7 @@ sample_size    <- c(0.5, 1, 2)
 ```
 
 ```{r}
-scenarios <- make_scenarios(n_pred, event_fraction, sample_size) # look into expand.grid
+scenarios <- make_scenarios(n_pred, event_fraction, sample_size)
 dat <- sim_data(scenarios, 10) # 1000 reps: 7GB - if stored as a list, 4GB
 ```
 
