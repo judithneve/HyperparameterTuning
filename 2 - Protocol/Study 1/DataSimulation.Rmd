@@ -1,0 +1,32 @@
+---
+title: "Data Generation"
+author: "Judith Neve"
+date: '2022-10-31'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(magrittr)
+library(pmsampsize)
+library(tidyr)
+library(MASS)
+library(dplyr)
+```
+
+```{r}
+source("DataSimFunctions.R")
+```
+
+```{r}
+n_pred         <- c(8, 16, 32)
+event_fraction <- c(0.1, 0.3, 0.5)
+sample_size    <- c(0.5, 1, 2)
+```
+
+```{r}
+scenarios <- make_scenarios(n_pred, event_fraction, sample_size)
+
+dat <- sim_data(scenarios, 10)
+```
+
