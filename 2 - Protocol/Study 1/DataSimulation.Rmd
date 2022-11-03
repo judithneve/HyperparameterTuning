@@ -49,6 +49,19 @@ library(caret)
 
 ```{r}
 set.seed(1)
+# TODO: find how to make a full grid for ALL the hyperparameters I want
+# TODO: have relevant values for the hyperparameters
+
+defaults <- c(
+  num.trees                 = 500,
+  replace                   = TRUE,
+  sample.fraction           = ifelse(replace, 1, 0.632),
+  mtry                      = floor(sqrt(p)),
+  respect.unordered.factors = "ignore", # but if splitrule = extratrees, this is "partition". "order" is also an option
+  min.node.size             = 1,
+  splitrule                 = "gini" # other options are extratrees and hellinger
+  )
+
 
 tuneGrid <- expand.grid(
   mtry = c(1:3),
@@ -59,13 +72,16 @@ ctrl <- trainControl(
   method = "cv",
   number = 5
 )
-model <- train(
+# TODO: set the folds rather than have them be done within train
+model1 <- train(
   x = toy_dat[,1:32],
   y = as.factor(toy_dat[,"Y"]),
   method = "ranger",
+  num.tree = 100,
   trControl = ctrl,
   tuneGrid = tuneGrid
 )
-model
+model1
+# TODO: how to extract results for best tune
 ```
 
