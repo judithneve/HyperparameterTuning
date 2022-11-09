@@ -35,7 +35,7 @@ Now I want to do some tuning for each of these datasets
 use caret (grid search), optimise accuracy, fit a random forest (and CV) for each dataset, on each dataset tune according to all the relevant combinations
 
 ```{r}
-toy_dat <- dat[dat[,"dataset_id"] == "1_1",] %>%
+toy_dat <- dat[dat[,"dataset_id"] == "3_3",] %>%
   as.data.frame() %>% 
   pivot_wider(names_from = Pred_number, values_from = Pred_value)
 
