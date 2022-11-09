@@ -36,7 +36,7 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
 
 sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
   set.seed(seed)
-  dat  <- matrix(NA, nrow = 0, ncol = 7)
+  dat  <- matrix(NA, nrow = 0, ncol = 8)
   
   for (i in 1:nrow(scenarios)) {
     sample_size_temp <- scenarios$n[i]
@@ -44,7 +44,7 @@ sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
     
     # TODO: how do I set this and this intercept to ensure an AUC of 0.8 (or some other number)
     #       include interaction terms
-    beta <- runif(n_pred_temp + 1, -5, 5)
+    # beta <- runif(n_pred_temp + 1, -5, 5)
     
     for (j in 1:nsim) {
       
@@ -64,15 +64,33 @@ sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
       dat_temp[,1:n_pred_temp] <- X
       
       ### TODO: include interactions ###
-      X <- cbind(1, X) %>% as.matrix()
+      X_interaction <- matrix(NA, nrow = sample_size_temp, ncol = sum(1:(n_pred_temp*0.75 - 1)))
+      index <- 0
+      for (x1 in 1:(n_pred_temp*0.75 - 1)) {
+        for (x2 in (x1+1):(n_pred_temp*0.75)) {
+          index <- index + 1
+          X_interaction[,index] <- X[,x1]*X[,x2]
+        }
+      }
+      X <- cbind(1, X, X_interaction) %>% as.matrix()
       
+      intercept <- betas_matrix[1,3] # define this
+      beta <- betas_matrix[1,4] # define this
+      beta <- c(
+        intercept,
+        rep(beta, n_pred_temp*0.5),
+        rep(beta*3, n_pred_temp*0.25),
+        rep(0, n_pred_temp*0.25),
+        rep(beta*2, sum(1:(n_pred_temp*0.75)-1))
+      )
       prob <- exp(X %*% beta) / (1 + exp(X %*% beta))
       dat_temp[,"Y"] <- rbinom(sample_size_temp, 1, prob)
       
       dat_temp <- dat_temp %>%
         as.data.frame() %>%
-        pivot_longer(-Y, names_to = "Pred_number", values_to = "Pred_value") %>%
-        mutate(sample_size_prop = scenarios$prop_min_n[i],
+        mutate(id = 1:sample_size_temp) %>% 
+        pivot_longer(-c(Y, id), names_to = "Pred_number", values_to = "Pred_value") %>%
+        mutate(sample_size_prop = scenarios$prop_sample_size[i],
                n_pred           = n_pred_temp,
                event_fraction   = scenarios$event_fraction[i],
                dataset_id       = paste(i, j, sep = "_")) %>%
