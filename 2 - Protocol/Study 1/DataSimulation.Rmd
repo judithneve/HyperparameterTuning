@@ -64,22 +64,27 @@ defaults <- c(
 
 
 tuneGrid <- expand.grid(
-  mtry = c(1:3),
-  splitrule = "gini",
-  min.node.size = c(50:52)
+  mtry = c(1:3),                                      # TODO: this goes to n_pred
+  splitrule = c("gini", "extratrees", "hellinger"),
+  min.node.size = c(1:5)                              # TODO: what's the biggest node size? n?
   )
 ctrl <- trainControl(
   method = "cv",
   number = 5
 )
 # TODO: set the folds rather than have them be done within train
+
 model1 <- train(
   x = toy_dat[,1:32],
   y = as.factor(toy_dat[,"Y"]),
   method = "ranger",
-  num.tree = 100,
   trControl = ctrl,
-  tuneGrid = tuneGrid
+  tuneGrid = tuneGrid,
+  # hyperparameters not tuned by caret
+  num.trees = 1,                        # change this to i and loop over doing this for many trees?
+  replace = TRUE,                       # same code, replace = FALSE
+  sample.fraction = 1,                  # same code, loop?
+  respect.unordered.factors = "ignore"  # change this
 )
 model1
 # TODO: how to extract results for best tune
