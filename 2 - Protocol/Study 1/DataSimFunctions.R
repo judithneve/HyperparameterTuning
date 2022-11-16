@@ -34,17 +34,15 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
 
 ## Simulate data
 
-sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
+sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
   set.seed(seed)
   dat  <- matrix(NA, nrow = 0, ncol = 8)
   
   for (i in 1:nrow(scenarios)) {
-    sample_size_temp <- scenarios$n[i]
-    n_pred_temp      <- scenarios$n_pred[i]
-    
-    # TODO: how do I set this and this intercept to ensure an AUC of 0.8 (or some other number)
-    #       include interaction terms
-    # beta <- runif(n_pred_temp + 1, -5, 5)
+    sample_size_temp    <- scenarios$n[i]
+    n_pred_temp         <- scenarios$n_pred[i]
+    event_fraction_temp <- scenarios$event_fraction[i]
+    betas <- coefs[coefs[,"n_predictor"] == n_pred_temp & coefs[,"prevalence"] == event_fraction_temp,]
     
     for (j in 1:nsim) {
       
@@ -63,7 +61,6 @@ sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
       
       dat_temp[,1:n_pred_temp] <- X
       
-      ### TODO: include interactions ###
       X_int <- matrix(NA, nrow = sample_size_temp, ncol = n_pred_temp*0.25)
       interacted_with <- n_pred_temp*0.5
       for (int in 1:ncol(X_int)) {
@@ -72,9 +69,9 @@ sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
       }
       X <- cbind(1, X, X_int) %>% as.matrix()
       
-      intercept <- betas_matrix[1,3] # define this
-      beta <- betas_matrix[1,4] # define this
-      gamma <- betas_matrix[1,5]
+      intercept <- betas[3]
+      beta <- betas[4]
+      gamma <- betas[5]
       beta <- c(
         intercept,
         rep(beta, n_pred_temp),
