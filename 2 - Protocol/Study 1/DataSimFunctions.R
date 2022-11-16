@@ -64,24 +64,21 @@ sim_data <- function(scenarios, nsim = 1000, seed = 0070661) {
       dat_temp[,1:n_pred_temp] <- X
       
       ### TODO: include interactions ###
-      X_interaction <- matrix(NA, nrow = sample_size_temp, ncol = sum(1:(n_pred_temp*0.75 - 1)))
-      index <- 0
-      for (x1 in 1:(n_pred_temp*0.75 - 1)) {
-        for (x2 in (x1+1):(n_pred_temp*0.75)) {
-          index <- index + 1
-          X_interaction[,index] <- X[,x1]*X[,x2]
-        }
+      X_int <- matrix(NA, nrow = sample_size_temp, ncol = n_pred_temp*0.25)
+      interacted_with <- n_pred_temp*0.5
+      for (int in 1:ncol(X_int)) {
+        X_int[,int] <- X[,int]*X[,interacted_with]
+        interacted_with <- interacted_with + 1
       }
-      X <- cbind(1, X, X_interaction) %>% as.matrix()
+      X <- cbind(1, X, X_int) %>% as.matrix()
       
       intercept <- betas_matrix[1,3] # define this
       beta <- betas_matrix[1,4] # define this
+      gamma <- betas_matrix[1,5]
       beta <- c(
         intercept,
-        rep(beta, n_pred_temp*0.5),
-        rep(beta*3, n_pred_temp*0.25),
-        rep(0, n_pred_temp*0.25),
-        rep(beta*2, sum(1:(n_pred_temp*0.75)-1))
+        rep(beta, n_pred_temp),
+        rep(gamma, n_pred_temp*0.25)
       )
       prob <- exp(X %*% beta) / (1 + exp(X %*% beta))
       dat_temp[,"Y"] <- rbinom(sample_size_temp, 1, prob)

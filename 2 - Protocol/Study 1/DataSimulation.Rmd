@@ -40,11 +40,13 @@ toy_dat <- dat[dat[,"dataset_id"] == "3_3",] %>%
   pivot_wider(names_from = Pred_number, values_from = Pred_value)
 
 toy_dat[c(1, 7:14)]  <- lapply(toy_dat[c(1, 7:14)], as.numeric)
+
+toy_dat$Y %>% mean()
 ```
 
 ```{r}
 mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
-
+# AUC and event faction also work?
 summary(mod)
 ```
 
@@ -58,6 +60,8 @@ library(caret)
 ```
 
 ```{r}
+# user friendly?? discussion point
+# too many steps: how relevant? - side of what is usually done
 set.seed(1)
 # TODO: find how to make a full grid for ALL the hyperparameters I want
 # TODO: have relevant values for the hyperparameters
