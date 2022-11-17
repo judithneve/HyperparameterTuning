@@ -42,7 +42,7 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
     sample_size_temp    <- scenarios$n[i]
     n_pred_temp         <- scenarios$n_pred[i]
     event_fraction_temp <- scenarios$event_fraction[i]
-    betas <- coefs[coefs[,"n_predictor"] == n_pred_temp & coefs[,"prevalence"] == event_fraction_temp,]
+    betas <- coefs[coefs[,"n_predictor"] == n_pred_temp & near(coefs[,"prevalence"], event_fraction_temp),]
     
     for (j in 1:nsim) {
       
@@ -61,7 +61,7 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
       
       dat_temp[,1:n_pred_temp] <- X
       
-      X_int <- matrix(NA, nrow = sample_size_temp, ncol = n_pred_temp*0.25)
+      X_int <- matrix(0, nrow = sample_size_temp, ncol = n_pred_temp*0.25)
       interacted_with <- n_pred_temp*0.5
       for (int in 1:ncol(X_int)) {
         X_int[,int] <- X[,int]*X[,interacted_with]

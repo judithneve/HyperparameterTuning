@@ -5,6 +5,8 @@ date: '2022-10-31'
 output: html_document
 ---
 
+# Works as should
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(magrittr)
@@ -12,10 +14,7 @@ library(pmsampsize)
 library(tidyr)
 library(MASS)
 library(dplyr)
-```
-
-```{r}
-source("DataSimFunctions.R")
+library(pROC)
 ```
 
 ```{r}
@@ -24,18 +23,54 @@ event_fraction <- c(0.1, 0.3, 0.5)
 sample_size    <- c(0.5, 1, 2)
 ```
 
+## Beta generation - trial 1
+
+AUC: 0.7
+1. Intercept + slope
+2. Interaction
+
+Note: gamma similar size, but vary between + and - so average 0
+
 ```{r}
-scenarios <- make_scenarios(n_pred, event_fraction, sample_size)
-scenarios_red <- scenarios %>% filter(n_pred == 8, event_fraction == 0.1)
-dat <- sim_data(scenarios_red, 10) # 1000 reps: 7GB - if stored as a list, 4GB
+source("GenerateBetas.R")
 ```
 
-Now I want to do some tuning for each of these datasets
+```{r}
+start_seed <- 100
+example_n <- 1e5
+n_beta_repetitions <- 20
 
-use caret (grid search), optimise accuracy, fit a random forest (and CV) for each dataset, on each dataset tune according to all the relevant combinations
+betas_matrix <- mean_multiple_betas(
+  n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+  example_n = example_n, start_seed = start_seed
+)
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+
+save(betas_matrix, file = "betas.RData")
+save(validation_betas_matrix, file = "valid.RData")
+save(validation_betas_matrix_noint, file = "validnoint.RData")
+```
 
 ```{r}
-toy_dat <- dat[dat[,"dataset_id"] == "3_3",] %>%
+source("DataSimFunctions.R")
+```
+
+```{r}
+scenarios <- make_scenarios(n_pred, event_fraction, sample_size)
+dat <- sim_data(scenarios, betas_matrix, 1) # 1000 reps: 7GB - if stored as a list, 4GB
+```
+
+### Testing GLM
+
+```{r}
+toy_dat <- dat[dat[,"dataset_id"] == "19_1",] %>%
   as.data.frame() %>% 
   pivot_wider(names_from = Pred_number, values_from = Pred_value)
 
@@ -50,6 +85,168 @@ mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, e
 summary(mod)
 ```
 
+## Beta generation - trial 2
+
+AUC: 0.7
+1. Intercept + slope
+2. Interaction
+
+Note: gamma similar size, but vary between + and - so average 0
+
+```{r}
+source("GenerateBetas_1step.R")
+```
+
+```{r}
+start_seed <- 100
+example_n <- 1e4
+n_beta_repetitions <- 5
+
+betas_matrix <- mean_multiple_betas(
+  n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+  example_n = example_n, start_seed = start_seed
+)
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+```
+
+```{r}
+dat <- sim_data(scenarios, betas_matrix, 1) # 1000 reps: 7GB - if stored as a list, 4GB
+```
+
+### Testing GLM
+
+```{r}
+toy_dat <- dat[dat[,"dataset_id"] == "19_1",] %>%
+  as.data.frame() %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value)
+
+toy_dat[c(1, 7:14)]  <- lapply(toy_dat[c(1, 7:14)], as.numeric)
+
+toy_dat$Y %>% mean()
+```
+
+```{r}
+mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
+# AUC and event faction also work?
+summary(mod)
+```
+
+
+## Beta generation - trial 3
+
+AUC: 0.7
+1. Intercept + slope
+2. Interaction
+
+Note: gamma similar size, but vary between + and - so average 0
+
+```{r}
+source("GenerateBetas_intgamma.R")
+```
+
+```{r}
+start_seed <- 100
+example_n <- 1e4
+n_beta_repetitions <- 5
+
+betas_matrix <- mean_multiple_betas(
+  n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+  example_n = example_n, start_seed = start_seed
+)
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+```
+
+```{r}
+dat <- sim_data(scenarios, betas_matrix, 1) # 1000 reps: 7GB - if stored as a list, 4GB
+```
+
+### Testing GLM
+
+```{r}
+toy_dat <- dat[dat[,"dataset_id"] == "19_1",] %>%
+  as.data.frame() %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value)
+
+toy_dat[c(1, 7:14)]  <- lapply(toy_dat[c(1, 7:14)], as.numeric)
+
+toy_dat$Y %>% mean()
+```
+
+```{r}
+mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
+# AUC and event faction also work?
+summary(mod)
+```
+
+
+## Beta generation - trial 4
+
+AUC: 0.7
+1. Intercept + slope
+2. Interaction
+
+Note: gamma similar size, but vary between + and - so average 0
+
+```{r}
+source("GenerateBetas_3step.R")
+```
+
+```{r}
+start_seed <- 100
+example_n <- 1e4
+n_beta_repetitions <- 20
+
+betas_matrix <- mean_multiple_betas(
+  n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+  example_n = example_n, start_seed = start_seed
+)
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+)
+```
+
+```{r}
+dat <- sim_data(scenarios, betas_matrix, 1) # 1000 reps: 7GB - if stored as a list, 4GB
+```
+
+### Testing GLM
+
+```{r}
+toy_dat <- dat[dat[,"dataset_id"] == "19_1",] %>%
+  as.data.frame() %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value)
+
+toy_dat[c(1, 7:14)]  <- lapply(toy_dat[c(1, 7:14)], as.numeric)
+
+toy_dat$Y %>% mean()
+```
+
+```{r}
+mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
+# AUC and event faction also work?
+summary(mod)
+```
+
+# Tuning
 
 ```{r}
 toy_dat <- dat[[i]][[j]]
