@@ -207,7 +207,7 @@ source("GenerateBetas_3step.R")
 
 ```{r}
 start_seed <- 100
-example_n <- 1e4
+example_n <- 1e5
 n_beta_repetitions <- 20
 
 betas_matrix <- mean_multiple_betas(
@@ -216,16 +216,18 @@ betas_matrix <- mean_multiple_betas(
 )
 set.seed(2 * start_seed)
 validation_betas_matrix <- validate_betas(
-  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
 )
 set.seed(3 * start_seed)
 validation_betas_matrix_noint <- validate_betas_noint(
-  betas_matrix = betas_matrix, example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
 )
+
+save(betas_matrix, file = "betas_v2.RData")
 ```
 
 ```{r}
-dat <- sim_data(scenarios, betas_matrix, 1) # 1000 reps: 7GB - if stored as a list, 4GB
+dat <- sim_data(scenarios, betas_matrix[[1]], 1) # 1000 reps: 7GB - if stored as a list, 4GB
 ```
 
 ### Testing GLM
@@ -241,7 +243,7 @@ toy_dat$Y %>% mean()
 ```
 
 ```{r}
-mod <- glm(Y ~ .*., data = toy_dat %>% select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
+mod <- glm(Y ~ . + X1:X4 + X2:X5, data = toy_dat %>% dplyr::select(-c(id, sample_size_prop, n_pred, event_fraction, dataset_id)), family = binomial())
 # AUC and event faction also work?
 summary(mod)
 ```
@@ -286,8 +288,8 @@ ctrl <- trainControl(
 # TODO: set the folds rather than have them be done within train
 
 model1 <- train(
-  x = toy_dat[,1:32],
-  y = as.factor(toy_dat[,"Y"]),
+  x = toy_dat[,7:14],
+  y = as.factor(toy_dat$Y),
   method = "ranger",
   trControl = ctrl,
   tuneGrid = tuneGrid,
@@ -299,5 +301,24 @@ model1 <- train(
 )
 model1
 # TODO: how to extract results for best tune
+```
+
+```{r}
+library(ranger)
+
+mod <- ranger(as.factor(Y) ~ X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8, data = toy_dat, mtry = 2, splitrule = "hellinger", min.node.size = 1, probability = TRUE)
+
+val_dat <- dat[dat[,"dataset_id"] == "1_1",] %>%
+  as.data.frame() %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value)
+
+val_dat[c(1, 7:14)]  <- lapply(val_dat[c(1, 7:14)], as.numeric)
+
+val_dat$Y %>% mean()
+
+pred <- predict(mod, data = val_dat, type = "p")
+
+pred$predictions
+
 ```
 
