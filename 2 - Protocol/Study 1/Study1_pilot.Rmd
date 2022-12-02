@@ -13,6 +13,10 @@ library(tidyr)
 library(MASS)
 library(dplyr)
 library(pROC)
+library(ranger)
+library(caret)
+library(psych)
+set.seed(0070661)
 ```
 
 # Aim
@@ -39,13 +43,13 @@ source("DataSimFunctions.R")
 load("scenarios.RData")
 
 # n_datasets <- 1000
-n_datasets <- 3
+n_datasets <- 1
 ```
 
 ## True effect estimation
 
 ```{r}
-# source("GenerateBetas_3step.R")
+source("GenerateBetas_3step.R")
 # 
 # start_seed <- 100
 # example_n <- 1e5
@@ -57,11 +61,11 @@ n_datasets <- 3
 # )
 # set.seed(2 * start_seed)
 # validation_betas_matrix <- validate_betas(
-#   betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
 # )
 # set.seed(3 * start_seed)
 # validation_betas_matrix_noint <- validate_betas_noint(
-#   betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = n_pred, prevalences = event_fraction
+#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
 # )
 # 
 # save(betas_matrix, file = "betas_v2.RData")
@@ -69,12 +73,14 @@ load("betas_v2.RData")
 
 # TODO: fix beta generation
 # TODO: fix beta validation
-# FOR NOW: use p = 8, EF = 0.1 & p = 16, EF = 0.3
-betas_matrix <- betas_matrix[[1]][1,] %>% as.matrix() %>% t()
-scenarios <- scenarios %>% filter((n_pred == 8 & event_fraction == 0.1))
+
+# FOR NOW: use p = 8, EF = 0.5
+betas_matrix <- betas_matrix[[1]][3,] %>% as.matrix() %>% t()
+scenarios <- scenarios %>% filter(n_pred == 8, event_fraction == 0.5, prop_sample_size == 2)
 ```
 
 ```{r}
+set.seed(678)
 dat <- sim_data(scenarios, betas_matrix, n_datasets)
 # TODO: add the generation of a validation dataset
 # FOR NOW:
@@ -96,21 +102,13 @@ Predictive performance and computational time.
 # Methods
 
 ```{r}
-library(ranger)
-library(caret)
-# grid search
-# optimise accuracy - what is the threshold
-# 5-fold CV
-```
-
-```{r}
 # i.e., which ones are we tuning?
 hyperparameter_combinations <- expand.grid(
   mtry = TRUE,
-  sample.fraction = TRUE,
+  sample.fraction = c(TRUE, FALSE), # TODO: adapt protocol to this
   num.trees = c(TRUE, FALSE),
   replace = c(TRUE, FALSE),
-  min.node.size = c(TRUE, FALSE),
+  min.node.size = TRUE,
   splitrule = c(TRUE, FALSE)
 )
 hyperparameter_combinations <- rbind(rep(FALSE, ncol(hyperparameter_combinations)),
@@ -130,49 +128,7 @@ ctrl <- trainControl(
 
 ```{r}
 source("tuning_functions.R")
-```
-
-```{r}
-# TODO: fix function so it can also work on no tuning
-best_hp <- tune_hyperparameters(
-  hyperparameter_combinations[2,],
-  dat[dat[,"dataset_id"] == "5_1",] %>%
-    as.data.frame() %>%
-    pivot_wider(names_from = Pred_number, values_from = Pred_value)
-)
-
-runtime <- best_hp$time
-# 3.5 minutes to tune only mtry and samplefrac
-# 10 minutes to tune replace on top of this
-```
-
-# Performance measures
-
-```{r}
-# make this into a function
-# validation dataset
-
-val_d <- validation_prep(validation_sets, "1_1")
-val_mod <- validate_model(
-  dat[dat[,"dataset_id"] == "5_1",] %>%
-    as.data.frame() %>%
-    pivot_wider(names_from = Pred_number, values_from = Pred_value),
-  best_hp
-)
-
-predict_val <- predict(val_mod, data = val_d)$predictions[,2]
-```
-
-```{r}
-library(psych)
-```
-
-```{r}
 source("PerformanceMetrics.R")
-```
-
-```{r}
-performance(predict_val, val_d$Y)
 ```
 
 # Methods & Performance measures in a for loop
@@ -183,9 +139,10 @@ source("DataSimFunctions.R")
 source("PerformanceMetrics.R")
 source("GenerateBetas_3step.R")
 source("tuning_functions.R")
-hyperparameter_combinations <- hyperparameter_combinations[c(1,15),]
-dat <- dat[dat[,"dataset_id"] == "3_1",] # scenario, how many in that scenario
 
+set.seed(500)
+
+start_tuning <- Sys.time()
 all_perf <- matrix(NA, nrow = length(unique(dat[,"dataset_id"]))*nrow(hyperparameter_combinations), ncol = 8 + 3 + 1) %>%
   as.data.frame()
 colnames(all_perf) <- c("Runtime",
@@ -193,26 +150,42 @@ colnames(all_perf) <- c("Runtime",
                         "sample_size_prop", "n_pred", "event_fraction",
                         "Tuned hyperparameters")
 
-dataset_n <- 0
+tuning_n <- 0
 for (dataset_id in unique(dat[,"dataset_id"])) {
-  dataset_n <- dataset_n + 1
   dataset <- dat[dat[,"dataset_id"] == dataset_id,] %>%
     as.data.frame() %>%
     mutate(Pred_value = as.numeric(Pred_value)) %>% 
     pivot_wider(names_from = Pred_number, values_from = Pred_value)
-  for (combination in 2:nrow(hyperparameter_combinations)) { # can't do none yet
-    # TODO: make sure this doesn't overwrite (some manipulation of dataset_n)
-    best_hp <- tune_hyperparameters(hyperparameter_combinations[combination,], dataset)
-    all_perf[dataset_n,"Runtime"] <- best_hp$time
-    
-    val_dataset <- validation_prep(validation_sets, dataset_id)
-    val_mod <- validate_model(dataset, best_hp)
+  val_dataset <- validation_prep(validation_sets, dataset_id)
+  for (combination in 1:nrow(hyperparameter_combinations)) { # can't do none yet
+    tuning_n <- tuning_n + 1
+    cat("tuning_combination", combination, "\n")
+    print(hyperparameter_combinations[combination,])
+    if (any(hyperparameter_combinations[combination,])) {
+      best_hp <- tune_hyperparameters(hyperparameter_combinations[combination,], dataset)
+      all_perf[tuning_n,"Runtime"] <- best_hp$time
+      val_mod <- validate_model(dataset, best_hp)
+    } else {
+      default_start <- Sys.time()
+      val_mod <- ranger(as.factor(Y) ~ .,
+                        data = dataset %>% select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),
+                        probability = TRUE)
+      default_end <- Sys.time()
+      all_perf[tuning_n,"Runtime"] <- default_end - default_start
+    }
     
     predict_val <- predict(val_mod, data = val_dataset)$predictions[,2]
-    all_perf[dataset_n,2:8] <- performance(predict_val, val_dataset$Y)
+    all_perf[tuning_n,2:8] <- performance(predict_val, val_dataset$Y)
     
-    all_perf[dataset_n,9:11] <- unique(dataset %>% select(sample_size_prop, n_pred, event_fraction))
-    all_perf[dataset_n,12] <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
+    all_perf[tuning_n,9:11] <- unique(dataset %>% select(sample_size_prop, n_pred, event_fraction))
+    all_perf[tuning_n,12] <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
   }
 }
+end_tuning <- Sys.time()
+
+all_tuning_time <- end_tuning - start_tuning
+
+save.image("tuneonce.RData")
 ```
+
+

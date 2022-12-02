@@ -1,18 +1,18 @@
 # Tuning functions
 
 # make a HP grid for a given combination of hyperparameters to tune
-hp_grid <- function(hp_combination) {    # input: a logical vector of whether HPs are tuned or not
+hp_grid <- function(hp_combination, p) {    # input: a logical vector of whether HPs are tuned or not
   tuning_ranges <- list(
-    mtry = 1:32,             # CHANGE - correspond to p
+    mtry = 1:p,             # CHANGE - correspond to p
     sample.fraction = seq(0.1, 1, by = 0.1),
-    num.trees = 1:10,        # CHANGE - correspond to range in protocol
+    num.trees = seq(100, 1000, by = 100),        # CHANGE - correspond to range in protocol
     replace = c(TRUE, FALSE),
     min.node.size = 1:10,    # CHANGE - correspond to N
     splitrule = c("gini", "hellinger", "extratrees")
   )
   
   default_values <- list(
-    mtry = 10,               # change -- sqrt(p)
+    mtry = sqrt(p),               # change -- sqrt(p)
     sample.fraction = 1,
     num.trees = 500,
     replace = TRUE,
@@ -36,21 +36,19 @@ hp_grid <- function(hp_combination) {    # input: a logical vector of whether HP
 tune_hyperparameters <- function(combination, dataset) {
   n_pred <- as.integer(unique(dataset$n_pred))
   
-  tuneGrid_full <- hp_grid(combination)
-  cat(nrow(tuneGrid_full))
+  tuneGrid_full <- hp_grid(combination, p = n_pred)
   tuneGrid_red  <- tuneGrid_full %>%
     select(mtry, splitrule, min.node.size) %>%
-    filter(mtry <= n_pred) %>% 
     unique()
   
   start <- Sys.time()
   mods <- list()
   for (sf in unique(tuneGrid_full$sample.fraction)) {
-    cat(sf)
+    cat("sample fraction = ", sf, "\n")
     for (nt in unique(tuneGrid_full$num.trees)) {
-      cat(nt)
+      cat("num.trees = ", nt, "\n")
       for (r in unique(tuneGrid_full$replace)) {
-        cat(r)
+        cat("replace = ", r, "\n")
         length_list <- length(mods) + 1
         mods[[length_list]] <- train(
           x = as.data.frame(dataset[,7:(6+n_pred)]),
@@ -61,7 +59,7 @@ tune_hyperparameters <- function(combination, dataset) {
           num.trees = nt,
           replace = r,
           sample.fraction = sf
-        )
+        ) # TODO: only store results? maybe I can use this to get the best model to use for prediction too
       }
     }
   }
@@ -91,7 +89,7 @@ validation_prep <- function(datasets, dataset_id) {
     as.data.frame() %>%
     select(Y, Pred_number, Pred_value, id) %>%
     mutate(Pred_value = as.numeric(Pred_value),
-           Y = as.factor(Y))
+           Y = as.factor(Y)) %>%
     pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
     select(-id)
 }

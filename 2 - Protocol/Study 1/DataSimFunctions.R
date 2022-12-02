@@ -17,7 +17,7 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
     for (ef in event_fraction) {
       scenarios$n[(scenarios$n_pred == p) & (scenarios$event_fraction == ef)] <- pmsampsize(
         type = "b",
-        parameters = p,
+        parameters = p*1.25,
         prevalence = ef,
         cstatistic = cstat
       )$sample_size
@@ -31,6 +31,21 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
 }
 
 ##########################################################################
+
+## Make interactions
+
+interaction_matrix <- function(X, n_pred = ncol(X), prop_int = 0.25) {
+  int_term_2 <- n_pred/2
+  n_int      <- n_pred*prop_int
+  
+  X_int      <- matrix(NA, nrow = nrow(X), ncol = n_int)
+  
+  for (i in 1:n_int) {
+    X_int[,i] <- X[,i]*X[,i+int_term_2]
+  }
+  
+  return(X_int)
+}
 
 ## Simulate data
 
@@ -61,12 +76,7 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
       
       dat_temp[,1:n_pred_temp] <- X
       
-      X_int <- matrix(0, nrow = sample_size_temp, ncol = n_pred_temp*0.25)
-      interacted_with <- n_pred_temp*0.5
-      for (int in 1:ncol(X_int)) {
-        X_int[,int] <- X[,int]*X[,interacted_with]
-        interacted_with <- interacted_with + 1
-      }
+      X_int <- interaction_matrix(X)
       X <- cbind(1, X, X_int) %>% as.matrix()
       
       intercept <- betas[3]
