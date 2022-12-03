@@ -1,0 +1,191 @@
+---
+title: "Study 1 pilot"
+author: "Judith Neve"
+date: '2022-10-31'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(magrittr)
+library(pmsampsize)
+library(tidyr)
+library(MASS)
+library(dplyr)
+library(pROC)
+library(ranger)
+library(caret)
+library(psych)
+set.seed(0070661)
+```
+
+# Aim
+
+Identify the best combination of hyperparameters for which tuning leads to the best predictive performance of a prediction model.
+
+# DGM
+
+## Population
+
+```{r}
+p  <- c(8, 16, 32)
+EF <- c(0.1, 0.3, 0.5)
+N  <- c(0.5, 1, 2)
+```
+
+```{r}
+source("DataSimFunctions.R")
+```
+
+```{r}
+# scenarios <- make_scenarios(n_pred = p, event_fraction = EF, sample_size = N)
+# save(scenarios, file = "scenarios.RData")
+load("scenarios.RData")
+
+# n_datasets <- 1000
+n_datasets <- 1
+```
+
+## True effect estimation
+
+```{r}
+source("GenerateBetas_3step.R")
+# 
+# start_seed <- 100
+# example_n <- 1e5
+# n_beta_repetitions <- 20
+# 
+# betas_matrix <- mean_multiple_betas(
+#   n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+#   example_n = example_n, start_seed = start_seed
+# )
+# set.seed(2 * start_seed)
+# validation_betas_matrix <- validate_betas(
+#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+# )
+# set.seed(3 * start_seed)
+# validation_betas_matrix_noint <- validate_betas_noint(
+#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+# )
+# 
+# save(betas_matrix, file = "betas_v2.RData")
+load("betas_v2.RData")
+
+# TODO: fix beta generation
+# TODO: fix beta validation
+
+# FOR NOW: use p = 8, EF = 0.5
+betas_matrix <- betas_matrix[[1]][3,] %>% as.matrix() %>% t()
+scenarios <- scenarios %>% filter(n_pred == 8, event_fraction == 0.5, prop_sample_size == 2)
+```
+
+```{r}
+set.seed(678*2)
+dat <- sim_data(scenarios, betas_matrix, n_datasets)
+# TODO: add the generation of a validation dataset
+# FOR NOW:
+validation_sets <- sim_data(scenarios = scenarios %>% mutate(n = 10000),
+                            coefs = betas_matrix,
+                            nsim = n_datasets)
+```
+
+```{r}
+dat[,"dataset_id"] %>% unique() %>% length()
+validation_sets[,"dataset_id"] %>% unique() %>% length()
+```
+
+
+# Estimands
+
+Predictive performance and computational time.
+
+# Methods
+
+```{r}
+# i.e., which ones are we tuning?
+hyperparameter_combinations <- expand.grid(
+  mtry = TRUE,
+  sample.fraction = c(TRUE, FALSE), # TODO: adapt protocol to this
+  num.trees = c(TRUE, FALSE),
+  replace = c(TRUE, FALSE),
+  min.node.size = TRUE,
+  splitrule = c(TRUE, FALSE)
+)
+hyperparameter_combinations <- rbind(rep(FALSE, ncol(hyperparameter_combinations)),
+                                     hyperparameter_combinations)
+# this is a dataframe of whether or not we're tuning the given HPs
+```
+
+```{r}
+set.seed(1*2)
+
+ctrl <- trainControl(
+  method = "cv",
+  number = 5
+)
+# TODO: set the folds rather than have them be done within train (?)
+```
+
+```{r}
+source("tuning_functions.R")
+source("PerformanceMetrics.R")
+```
+
+# Methods & Performance measures in a for loop
+
+```{r}
+# load("3sets_beforeuning.RData")
+source("DataSimFunctions.R")
+source("PerformanceMetrics.R")
+source("GenerateBetas_3step.R")
+source("tuning_functions.R")
+
+set.seed(500*2)
+
+start_tuning <- Sys.time()
+all_perf <- matrix(NA, nrow = length(unique(dat[,"dataset_id"]))*nrow(hyperparameter_combinations), ncol = 8 + 3 + 1) %>%
+  as.data.frame()
+colnames(all_perf) <- c("Runtime",
+                        "AUC", "CalibrationSlope", "CalibrationIntercept", "BrierScore", "LogarithmicLoss", "Accuracy", "CohensKappa",
+                        "sample_size_prop", "n_pred", "event_fraction",
+                        "Tuned hyperparameters")
+
+tuning_n <- 0
+for (dataset_id in unique(dat[,"dataset_id"])) {
+  dataset <- dat[dat[,"dataset_id"] == dataset_id,] %>%
+    as.data.frame() %>%
+    mutate(Pred_value = as.numeric(Pred_value)) %>% 
+    pivot_wider(names_from = Pred_number, values_from = Pred_value)
+  val_dataset <- validation_prep(validation_sets, dataset_id)
+  for (combination in 1:nrow(hyperparameter_combinations)) { # can't do none yet
+    tuning_n <- tuning_n + 1
+    cat("tuning_combination", combination, "\n")
+    print(hyperparameter_combinations[combination,])
+    if (any(hyperparameter_combinations[combination,])) {
+      best_hp <- tune_hyperparameters(hyperparameter_combinations[combination,], dataset)
+      all_perf[tuning_n,"Runtime"] <- best_hp$time
+      val_mod <- validate_model(dataset, best_hp)
+    } else {
+      default_start <- Sys.time()
+      val_mod <- ranger(as.factor(Y) ~ .,
+                        data = dataset %>% select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),
+                        probability = TRUE)
+      default_end <- Sys.time()
+      all_perf[tuning_n,"Runtime"] <- default_end - default_start
+    }
+    
+    predict_val <- predict(val_mod, data = val_dataset)$predictions[,2]
+    all_perf[tuning_n,2:8] <- performance(predict_val, val_dataset$Y)
+    
+    all_perf[tuning_n,9:11] <- unique(dataset %>% select(sample_size_prop, n_pred, event_fraction))
+    all_perf[tuning_n,12] <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
+  }
+}
+end_tuning <- Sys.time()
+
+all_tuning_time <- end_tuning - start_tuning
+
+save.image("tuneonce2.RData")
+```
+
+
