@@ -43,7 +43,7 @@ source("DataSimFunctions.R")
 load("scenarios.RData")
 
 # n_datasets <- 1000
-n_datasets <- 1
+n_datasets <- 2
 ```
 
 ## True effect estimation
@@ -80,7 +80,7 @@ scenarios <- scenarios %>% filter(n_pred == 8, event_fraction == 0.5, prop_sampl
 ```
 
 ```{r}
-set.seed(678*2)
+set.seed(678*4)
 dat <- sim_data(scenarios, betas_matrix, n_datasets)
 # TODO: add the generation of a validation dataset
 # FOR NOW:
@@ -117,7 +117,7 @@ hyperparameter_combinations <- rbind(rep(FALSE, ncol(hyperparameter_combinations
 ```
 
 ```{r}
-set.seed(1*2)
+set.seed(1*4)
 
 ctrl <- trainControl(
   method = "cv",
@@ -140,10 +140,10 @@ source("PerformanceMetrics.R")
 source("GenerateBetas_3step.R")
 source("tuning_functions.R")
 
-set.seed(500*2)
+set.seed(500*4)
 
 start_tuning <- Sys.time()
-all_perf <- matrix(NA, nrow = length(unique(dat[,"dataset_id"]))*nrow(hyperparameter_combinations), ncol = 8 + 3 + 1) %>%
+all_perf <- matrix(NA, nrow = length(unique(dat[,"dataset_id"]))*nrow(hyperparameter_combinations), ncol = 8 + 3 + 1 + 1) %>%
   as.data.frame()
 colnames(all_perf) <- c("Runtime",
                         "AUC", "CalibrationSlope", "CalibrationIntercept", "BrierScore", "LogarithmicLoss", "Accuracy", "CohensKappa",
@@ -179,13 +179,14 @@ for (dataset_id in unique(dat[,"dataset_id"])) {
     
     all_perf[tuning_n,9:11] <- unique(dataset %>% select(sample_size_prop, n_pred, event_fraction))
     all_perf[tuning_n,12] <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
+    all_perf[tuning_n,13] <- dataset_id
   }
 }
 end_tuning <- Sys.time()
 
 all_tuning_time <- end_tuning - start_tuning
 
-save.image("tuneonce2.RData")
+save.image("tuneonce4_2datasets.RData")
 ```
 
 

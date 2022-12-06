@@ -5,7 +5,7 @@ hp_grid <- function(hp_combination, p) {    # input: a logical vector of whether
   tuning_ranges <- list(
     mtry = 1:p,             # CHANGE - correspond to p
     sample.fraction = seq(0.1, 1, by = 0.1),
-    num.trees = seq(100, 1000, by = 100),        # CHANGE - correspond to range in protocol
+    num.trees = c(100, 500),        # CHANGE - correspond to range in protocol
     replace = c(TRUE, FALSE),
     min.node.size = 1:10,    # CHANGE - correspond to N
     splitrule = c("gini", "hellinger", "extratrees")
