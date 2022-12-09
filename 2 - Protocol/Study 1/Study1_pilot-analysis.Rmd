@@ -1,0 +1,193 @@
+---
+title: "Study1 pilot analysis"
+author: "Judith Neve"
+date: '2022-12-08'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+```{r}
+# load("tuneonce.RData")
+# datasets <- dat
+# validation_datasets <- validation_sets
+# performances <- all_perf %>%
+#   mutate(dataset_id = "1_1")
+# total_tuning_times <- all_tuning_time
+# load("tuneonce2.RData")
+# datasets <- rbind(datasets,
+#                   dat %>%
+#                     as.data.frame() %>%
+#                     mutate(dataset_id = "1_2"))
+# validation_datasets <- rbind(validation_datasets,
+#                              validation_sets %>%
+#                                as.data.frame() %>%
+#                                mutate(dataset_id = "1_2"))
+# performances <- rbind(performances,
+#                       all_perf %>%
+#                         mutate(dataset_id = "1_2"))
+# total_tuning_times <- c(total_tuning_times, all_tuning_time)
+# load("tuneonce3.RData")
+# datasets <- rbind(datasets,
+#                   dat %>%
+#                     as.data.frame() %>%
+#                     mutate(dataset_id = "1_3"))
+# validation_datasets <- rbind(validation_datasets,
+#                              validation_sets %>%
+#                                as.data.frame() %>%
+#                                mutate(dataset_id = "1_3"))
+# performances <- rbind(performances,
+#                       all_perf %>%
+#                         mutate(dataset_id = "1_3"))
+# total_tuning_times <- c(total_tuning_times, all_tuning_time)
+# load("tuneonce4_2datasets.RData")
+# datasets <- rbind(datasets,
+#                   dat %>%
+#                     as.data.frame() %>%
+#                     mutate(dataset_id =
+#                            recode(dataset_id,
+#                                   `1_1` = "1_4",
+#                                   `1_1` = "1_5")))
+# validation_datasets <- rbind(validation_datasets,
+#                              validation_sets %>%
+#                                as.data.frame() %>%
+#                                mutate(dataset_id =
+#                                        recode(dataset_id,
+#                                               `1_1` = "1_4",
+#                                               `1_1` = "1_5")))
+# performances <- rbind(performances,
+#                       all_perf %>%
+#                         mutate(dataset_id =
+#                            recode(dataset_id,
+#                                   `1_1` = "1_4",
+#                                   `1_1` = "1_5")))
+# total_tuning_times <- c(total_tuning_times, all_tuning_time)
+```
+
+
+```{r}
+load("pilot2.RData")
+rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time")])
+```
+
+#### Check the values of tuning times
+
+```{r}
+sum(all_perf$Runtime)
+(sum(as.numeric(all_tuning_time))*60 - sum(all_perf$Runtime))/60
+```
+
+## Summary table
+
+```{r}
+summary_table <- all_perf %>%
+  mutate(`Tuned hyperparameters` =
+           ifelse(`Tuned hyperparameters` == "",
+                "None",
+                `Tuned hyperparameters`)) %>% 
+  group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>% 
+  summarise(mean_AUC = mean(AUC),
+            var_AUC = var(AUC),
+            median_CalibrationSlope = median(CalibrationSlope),
+            IQR_slope = IQR(CalibrationSlope),
+            RMSD_slope = sqrt(mean((log(CalibrationSlope))^2)),
+            mean_time = mean(Runtime),
+            var_time = var(Runtime))
+summary_table
+```
+
+```{r}
+df_scale_setter <- tibble(
+  Accuracy = rep(c(0, 1), each = 9),
+  AUC = rep(c(0.5, 1), each = 9),
+  BrierScore = rep(c(0, 1), each = 9),
+  CalibrationIntercept = rep(c(-1, 1), each = 9),
+  CalibrationSlope = rep(c(0, 2), each = 9),
+  CohensKappa = rep(c(0, 1), each = 9),
+  LogarithmicLoss = rep(c(0, 1), each = 9),
+  Runtime = 0,
+  `Tuned hyperparameters` = rep(unique(all_perf$`Tuned hyperparameters`), 2)
+) %>%
+  pivot_longer(Accuracy:LogarithmicLoss,
+               names_to = "Metric",
+               values_to = "Performance")
+
+df_targets <- tibble(
+  Accuracy = 1,
+  AUC = 1,
+  BrierScore = 0,
+  CalibrationIntercept = 0,
+  CalibrationSlope = 1,
+  CohensKappa = 1,
+  LogarithmicLoss = 0,
+  Runtime = 0,
+  `Tuned hyperparameters` = unique(all_perf$`Tuned hyperparameters`)
+) %>%
+  pivot_longer(Accuracy:LogarithmicLoss,
+               names_to = "Metric",
+               values_to = "Target")
+
+all_perf %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  ggplot(aes(x = Runtime,
+             y = Performance,
+             col = `Tuned hyperparameters`)) +
+  geom_point() +
+  xlim(0, max(all_perf$Runtime)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(~ Metric, scales = "free_y") +
+  theme_minimal() #+
+  # geom_point(data = summary_table %>%
+  #              dplyr::select(mean_AUC, median_CalibrationSlope, mean_time, `Tuned hyperparameters`) %>%
+  #              mutate(AUC = mean_AUC,
+  #                     CalibrationSlope = median_CalibrationSlope,
+  #                     Runtime = mean_time) %>%
+  #              pivot_longer(AUC:CalibrationSlope,
+  #                           names_to = "Metric",
+  #                           values_to = "Performance"),
+  #            size = 3)
+ggsave("plot_grouped.jpg", width = 30, height = 15, units = "cm")
+```
+
+```{r}
+all_perf %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  ggplot(aes(x = Runtime,
+             y = Performance)) +
+  geom_point() +
+  xlim(0, max(all_perf$Runtime)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(Metric ~ `Tuned hyperparameters`, ncol = 9, scales = "free_y") +
+  theme_minimal() #+
+  # geom_point(data = summary_table %>%
+  #              dplyr::select(mean_AUC, median_CalibrationSlope, mean_time, `Tuned hyperparameters`) %>%
+  #              mutate(AUC = mean_AUC,
+  #                     CalibrationSlope = median_CalibrationSlope,
+  #                     Runtime = mean_time) %>%
+  #              pivot_longer(AUC:CalibrationSlope,
+  #                           names_to = "Metric",
+  #                           values_to = "Performance"),
+  #            size = 3)
+ggsave("plot_facetted.jpg", width = 90, height = 40, units = "cm")
+```
+
+
+```{r}
+summary_table %>% 
+  pivot_longer(c(mean_AUC, median_CalibrationSlope),
+               names_to = "Metric",
+               values_to = "Performance") %>% 
+  pivot_longer(c(var_AUC, IQR_slope),
+               names_to = "XXX",
+               values_to = "MC error")
+```
+

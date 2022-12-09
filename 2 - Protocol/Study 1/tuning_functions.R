@@ -5,7 +5,7 @@ hp_grid <- function(hp_combination, p) {    # input: a logical vector of whether
   tuning_ranges <- list(
     mtry = 1:p,             # CHANGE - correspond to p
     sample.fraction = seq(0.1, 1, by = 0.1),
-    num.trees = c(100, 500),        # CHANGE - correspond to range in protocol
+    # num.trees = c(100, 500),        # CHANGE - correspond to range in protocol
     replace = c(TRUE, FALSE),
     min.node.size = 1:10,    # CHANGE - correspond to N
     splitrule = c("gini", "hellinger", "extratrees")
@@ -14,7 +14,7 @@ hp_grid <- function(hp_combination, p) {    # input: a logical vector of whether
   default_values <- list(
     mtry = sqrt(p),               # change -- sqrt(p)
     sample.fraction = 1,
-    num.trees = 500,
+    # num.trees = 500,
     replace = TRUE,
     min.node.size = 1,
     splitrule = "gini"
@@ -45,8 +45,8 @@ tune_hyperparameters <- function(combination, dataset) {
   mods <- list()
   for (sf in unique(tuneGrid_full$sample.fraction)) {
     cat("sample fraction = ", sf, "\n")
-    for (nt in unique(tuneGrid_full$num.trees)) {
-      cat("num.trees = ", nt, "\n")
+    # for (nt in unique(tuneGrid_full$num.trees)) {
+    #   cat("num.trees = ", nt, "\n")
       for (r in unique(tuneGrid_full$replace)) {
         cat("replace = ", r, "\n")
         length_list <- length(mods) + 1
@@ -56,32 +56,32 @@ tune_hyperparameters <- function(combination, dataset) {
           method = "ranger",
           trControl = ctrl,
           tuneGrid = tuneGrid_red,
-          num.trees = nt,
+          # num.trees = nt,
           replace = r,
           sample.fraction = sf
         ) # TODO: only store results? maybe I can use this to get the best model to use for prediction too
       }
-    }
+    # }
   }
   end <- Sys.time()
-  tuning_time <- end - start
+  tuning_time <- difftime(end, start, units = "mins")
   
   # extract results for best tune
-  all_mods <- matrix(NA, nrow = 0, ncol = 10) %>% as.data.frame()
+  all_mods <- matrix(NA, nrow = 0, ncol = 9) %>% as.data.frame()
   mod  <- 0
   for (sf in unique(tuneGrid_full$sample.fraction)) {
-    for (nt in unique(tuneGrid_full$num.trees)) {
+    # for (nt in unique(tuneGrid_full$num.trees)) {
       for (r in unique(tuneGrid_full$replace)) {
         mod <- mod + 1
         all_mods <- rbind(all_mods,
                           mods[[mod]]$results %>% 
                             mutate(sample.fraction = sf,
-                                   num.trees = nt,
+                                   # num.trees = nt,
                                    replace = r))
       }
-    }
+    # }
   }
-  c((all_mods %>% arrange(desc(Accuracy)))[1,c(1:3, 8:10)], time = tuning_time)
+  c((all_mods %>% arrange(desc(Accuracy)))[1,c(1:3, 8:9)], time = tuning_time)
 }
 
 validation_prep <- function(datasets, dataset_id) {
@@ -97,7 +97,7 @@ validation_prep <- function(datasets, dataset_id) {
 validate_model <- function(dataset, best_hp) {
   ranger(as.factor(Y) ~ .,
          data = dataset %>% select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),
-         num.trees = best_hp$num.trees,
+         # num.trees = best_hp$num.trees,
          mtry = best_hp$mtry,
          splitrule = best_hp$splitrule,
          min.node.size = best_hp$min.node.size,

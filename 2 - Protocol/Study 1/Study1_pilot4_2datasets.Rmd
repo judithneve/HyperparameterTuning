@@ -148,7 +148,8 @@ all_perf <- matrix(NA, nrow = length(unique(dat[,"dataset_id"]))*nrow(hyperparam
 colnames(all_perf) <- c("Runtime",
                         "AUC", "CalibrationSlope", "CalibrationIntercept", "BrierScore", "LogarithmicLoss", "Accuracy", "CohensKappa",
                         "sample_size_prop", "n_pred", "event_fraction",
-                        "Tuned hyperparameters")
+                        "Tuned hyperparameters",
+                        "dataset_id")
 
 tuning_n <- 0
 for (dataset_id in unique(dat[,"dataset_id"])) {
