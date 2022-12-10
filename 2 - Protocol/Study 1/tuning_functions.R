@@ -56,7 +56,7 @@ tune_hyperparameters <- function(combination, dataset) {
           method = "ranger",
           trControl = ctrl,
           tuneGrid = tuneGrid_red,
-          # num.trees = nt,
+          num.trees = 500,
           replace = r,
           sample.fraction = sf
         ) # TODO: only store results? maybe I can use this to get the best model to use for prediction too
@@ -97,7 +97,7 @@ validation_prep <- function(datasets, dataset_id) {
 validate_model <- function(dataset, best_hp) {
   ranger(as.factor(Y) ~ .,
          data = dataset %>% select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),
-         # num.trees = best_hp$num.trees,
+         num.trees = 500,
          mtry = best_hp$mtry,
          splitrule = best_hp$splitrule,
          min.node.size = best_hp$min.node.size,

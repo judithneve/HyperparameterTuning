@@ -43,7 +43,7 @@ source("DataSimFunctions.R")
 load("scenarios.RData")
 
 # n_datasets <- 1000
-n_datasets <- 8
+n_datasets <- 10
 ```
 
 ## True effect estimation
@@ -154,7 +154,7 @@ for (dataset_id in unique(dat[,"dataset_id"])) {
   val_dataset <- validation_prep(validation_sets, dataset_id)
   for (combination in 1:nrow(hyperparameter_combinations)) {
     tuning_n <- tuning_n + 1
-    cat("tuning_combination", combination, "\n")
+    cat("tuning_combination", tuning_n, "\n")
     if (any(hyperparameter_combinations[combination,])) {
       best_hp <- tune_hyperparameters(hyperparameter_combinations[combination,], dataset)
       cat("tuning time = ", best_hp$time, "\n")
@@ -164,7 +164,8 @@ for (dataset_id in unique(dat[,"dataset_id"])) {
       default_start <- Sys.time()
       val_mod <- ranger(as.factor(Y) ~ .,
                         data = dataset %>% dplyr::select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),
-                        probability = TRUE)
+                        probability = TRUE,
+                        num.trees = 500)
       default_end <- Sys.time()
       all_perf[tuning_n,"Runtime"] <- difftime(default_end, default_start, units = "mins")
     }
