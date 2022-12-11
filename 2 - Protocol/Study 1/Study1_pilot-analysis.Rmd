@@ -145,9 +145,9 @@ names(Metric.labs) <- c("CalibrationSlope", "CalibrationIntercept", "BrierScore"
 
 HP.labs <- unique(all_perf$`Tuned hyperparameters`)
 names(HP.labs) <- HP.labs
-names(HP.labs)[2] <- "mtry + sample.fraction + replace\n+ min.node.size + splitrule"
-names(HP.labs)[4] <- "mtry + sample.fraction + min.node.size\n+ splitrule"
-names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
+# names(HP.labs)[2] <- "mtry + sample.fraction + replace\n+ min.node.size + splitrule"
+# names(HP.labs)[4] <- "mtry + sample.fraction + min.node.size\n+ splitrule"
+# names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
 HP.labs <- c(HP.labs[1], sort(HP.labs[2:9]))
 
 turbo_pal <- viridis::turbo(n = 9)
@@ -171,16 +171,16 @@ all_perf %>%
   facet_wrap(~ Metric,
              scales = "free_y",
              labeller = labeller(Metric = Metric.labs),
-             nrow = 2) +
-             # ncol = 3) +
+             # nrow = 2) +
+             ncol = 3) +
   theme_minimal() +
-  theme(legend.position = c(.88, .2),
-  # theme(legend.position = c(.85, .13),
+  # theme(legend.position = c(.88, .2),
+  theme(legend.position = c(.85, .13),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, 'cm'),
         axis.title = element_text(size = 12),
         legend.background = element_rect(),
-        # panel.spacing = unit(1.2, "lines"),
+        panel.spacing = unit(1.2, "lines"),
         strip.text = element_text(colour = "black",
                                   size = 11)) +
   scale_color_manual(breaks = HP.labs,
@@ -190,7 +190,7 @@ all_perf %>%
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("plot_grouped.jpg", width = 30, height = 15, units = "cm")
+ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
