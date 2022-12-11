@@ -195,6 +195,45 @@ ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
 
 ```{r}
 all_perf %>%
+  pivot_longer(c(Accuracy, AUC, CalibrationSlope),
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalibrationSlope", "Accuracy"))) %>% 
+  ggplot(aes(x = Runtime,
+             y = Performance,
+             group = `Tuned hyperparameters`)) +
+  geom_point(aes(col = `Tuned hyperparameters`,
+                 shape = `Tuned hyperparameters`),
+             size = 2) +
+  xlim(0, max(all_perf$Runtime)) +
+  geom_point(data = df_scale_setter %>% filter(Metric %in% c("Accuracy", "AUC", "CalibrationSlope")), alpha = 0) +
+  geom_hline(data = df_targets %>% filter(Metric %in% c("Accuracy", "AUC", "CalibrationSlope")), aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(~ Metric,
+             scales = "free_y",
+             labeller = labeller(Metric = Metric.labs),
+             nrow = 2) +
+  theme_minimal() +
+  theme(legend.position = c(.8, .22),
+  # theme(legend.position = c(.85, .13),
+        legend.text = element_text(size = 10),
+        legend.key.size = unit(0.6, 'cm'),
+        axis.title = element_text(size = 12),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        strip.text = element_text(colour = "black",
+                                  size = 11)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = turbo_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8)))
+
+ggsave("plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
+```
+
+```{r}
+all_perf %>%
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
