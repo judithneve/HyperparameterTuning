@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(viridis)
 ```
 
 ```{r}
@@ -77,17 +78,24 @@ rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time
 
 ```{r}
 sum(all_perf$Runtime)
-(sum(as.numeric(all_tuning_time))*60 - sum(all_perf$Runtime))/60
+(sum(as.numeric(all_tuning_time))*60 - sum(all_perf$Runtime))
 ```
+
+#### Data cleaning
+
+```{r}
+all_perf <- all_perf %>%
+  mutate(`Tuned hyperparameters` =
+           ifelse(`Tuned hyperparameters` == "",
+                "None",
+                `Tuned hyperparameters`))
+```
+
 
 ## Summary table
 
 ```{r}
 summary_table <- all_perf %>%
-  mutate(`Tuned hyperparameters` =
-           ifelse(`Tuned hyperparameters` == "",
-                "None",
-                `Tuned hyperparameters`)) %>% 
   group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>% 
   summarise(mean_AUC = mean(AUC),
             var_AUC = var(AUC),
@@ -113,7 +121,8 @@ df_scale_setter <- tibble(
 ) %>%
   pivot_longer(Accuracy:LogarithmicLoss,
                names_to = "Metric",
-               values_to = "Performance")
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("Accuracy", "AUC", "CalibrationSlope", "BrierScore", "CalibrationIntercept", "LogarithmicLoss", "CohensKappa")))
 
 df_targets <- tibble(
   Accuracy = 1,
@@ -128,30 +137,56 @@ df_targets <- tibble(
 ) %>%
   pivot_longer(Accuracy:LogarithmicLoss,
                names_to = "Metric",
-               values_to = "Target")
+               values_to = "Target") %>%
+  mutate(Metric = factor(Metric, levels = c("Accuracy", "AUC", "CalibrationSlope", "BrierScore", "CalibrationIntercept", "LogarithmicLoss", "CohensKappa")))
 
+Metric.labs <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "Cohen's kappa", "AUC", "Accuracy")
+names(Metric.labs) <- c("CalibrationSlope", "CalibrationIntercept", "BrierScore", "LogarithmicLoss", "CohensKappa", "AUC", "Accuracy")
+
+HP.labs <- unique(all_perf$`Tuned hyperparameters`)
+names(HP.labs) <- HP.labs
+names(HP.labs)[2] <- "mtry + sample.fraction + replace\n+ min.node.size + splitrule"
+names(HP.labs)[4] <- "mtry + sample.fraction + min.node.size\n+ splitrule"
+names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
+HP.labs <- c(HP.labs[1], sort(HP.labs[2:9]))
+
+turbo_pal <- viridis::turbo(n = 9)
+```
+
+
+```{r}
 all_perf %>%
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("Accuracy", "AUC", "CalibrationSlope", "BrierScore", "CalibrationIntercept", "LogarithmicLoss", "CohensKappa"))) %>% 
   ggplot(aes(x = Runtime,
              y = Performance,
-             col = `Tuned hyperparameters`)) +
-  geom_point() +
+             group = `Tuned hyperparameters`)) +
+  geom_point(aes(col = `Tuned hyperparameters`,
+                 shape = `Tuned hyperparameters`)) +
   xlim(0, max(all_perf$Runtime)) +
   geom_point(data = df_scale_setter, alpha = 0) +
   geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
-  facet_wrap(~ Metric, scales = "free_y") +
-  theme_minimal() #+
-  # geom_point(data = summary_table %>%
-  #              dplyr::select(mean_AUC, median_CalibrationSlope, mean_time, `Tuned hyperparameters`) %>%
-  #              mutate(AUC = mean_AUC,
-  #                     CalibrationSlope = median_CalibrationSlope,
-  #                     Runtime = mean_time) %>%
-  #              pivot_longer(AUC:CalibrationSlope,
-  #                           names_to = "Metric",
-  #                           values_to = "Performance"),
-  #            size = 3)
+  facet_wrap(~ Metric,
+             scales = "free_y",
+             labeller = labeller(Metric = Metric.labs),
+             nrow = 2) +
+  theme_minimal() +
+  theme(legend.position = c(.88, .2),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        axis.title = element_text(size = 12),
+        legend.background = element_rect(),
+        strip.text = element_text(colour = "black",
+                                  size = 11)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = turbo_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8)))
+
 ggsave("plot_grouped.jpg", width = 30, height = 15, units = "cm")
 ```
 
