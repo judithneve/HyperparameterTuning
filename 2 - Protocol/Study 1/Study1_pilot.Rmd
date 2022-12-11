@@ -49,7 +49,7 @@ n_datasets <- 10
 ## True effect estimation
 
 ```{r}
-source("GenerateBetas_3step.R")
+source("GenerateBetas.R")
 # 
 # start_seed <- 100
 # example_n <- 1e5
