@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(viridis)
+library(xtable)
 ```
 
 ```{r}
@@ -96,7 +97,7 @@ all_perf <- all_perf %>%
 
 ```{r}
 summary_table <- all_perf %>%
-  group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>% 
+  group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>%
   summarise(mean_AUC = mean(AUC),
             var_AUC = var(AUC),
             median_CalibrationSlope = median(CalibrationSlope),
@@ -105,6 +106,18 @@ summary_table <- all_perf %>%
             mean_time = mean(Runtime),
             var_time = var(Runtime))
 summary_table
+```
+
+
+```{r}
+summary_table_latex <- (all_perf %>%
+  group_by(`Tuned hyperparameters`) %>% 
+  summarise(AUC = paste0(round(mean(AUC), 2), " (", round(sd(AUC), 2), ")"),
+            `Calibration slope` = paste0(round(median(CalibrationSlope), 2), " (", round(IQR(CalibrationSlope), 2), ")"),
+            Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            Runtime = paste0(round(mean(Runtime), 2), " (", round(sd(Runtime), 2), ")")))[c(9,2:8),] %>%
+  xtable(caption = "Average performance of hyperparameter combinations")
+summary_table_latex %>% print(include.rownames = F)
 ```
 
 ```{r}
