@@ -50,26 +50,28 @@ n_datasets <- 10
 
 ```{r}
 source("GenerateBetas.R")
+load("betas_v2.RData")
 # 
-# start_seed <- 100
-# example_n <- 1e5
+start_seed <- 100
+example_n <- 1e5
 # n_beta_repetitions <- 20
 # 
 # betas_matrix <- mean_multiple_betas(
 #   n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
 #   example_n = example_n, start_seed = start_seed
 # )
-# set.seed(2 * start_seed)
-# validation_betas_matrix <- validate_betas(
-#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
-# )
-# set.seed(3 * start_seed)
-# validation_betas_matrix_noint <- validate_betas_noint(
-#  betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
-# )
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+ betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+)
+validation_betas_matrix
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+ betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+)
+validation_betas_matrix_noint
 # 
 # save(betas_matrix, file = "betas_v2.RData")
-load("betas_v2.RData")
 
 # TODO: fix beta generation
 # TODO: fix beta validation

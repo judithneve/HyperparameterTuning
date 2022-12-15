@@ -72,14 +72,56 @@ library(xtable)
 
 ```{r}
 load("Data/pilot2.RData")
+load("Data/betas_v2.RData")
 rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time")])
 ```
 
 #### Check the probability distributions
 
 ```{r}
+beta <- betas_matrix[[1]][3,3:5]
 
+dat %>% as_tibble() %>% 
+  mutate(Pred_value = as.numeric(Pred_value)) %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
+  mutate(prob = exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)) / (1 + exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)))) %>%
+  ggplot(aes(x = prob, fill = Y)) +
+  geom_histogram(position = "dodge") +
+  facet_wrap(~ dataset_id)
 ```
+
+```{r}
+validation_sets %>% as_tibble() %>% 
+  mutate(Pred_value = as.numeric(Pred_value)) %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
+  mutate(prob = exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)) / (1 + exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)))) %>%
+  ggplot(aes(x = prob, fill = Y)) +
+  geom_histogram(position = "dodge") +
+  facet_wrap(~ dataset_id)
+```
+
+```{r}
+mod <- glm(factor(Y) ~ X1 + X2 + X3 + X4 + X5 + X6 + X7 + X8 +
+             X1*X5 + X2*X6,
+           family = binomial(),
+           data = validation_sets %>% as_tibble() %>% 
+  mutate(Pred_value = as.numeric(Pred_value)) %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
+  mutate(prob = exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)) / (1 + exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)))))
+
+(predict(mod, type = "response") - (validation_sets %>% as_tibble() %>% 
+  mutate(Pred_value = as.numeric(Pred_value)) %>% 
+  pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
+  mutate(prob = exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)) / (1 + exp(beta[1] + beta[2]*(X1+X2+X3+X4+X5+X6+X7+X8) + beta[3]*(X1*X5 + X2*X6)))))$prob) %>% 
+  histogram()
+```
+
+```{r}
+summary(mod)
+```
+
+
+
 
 #### Check the values of tuning times
 
