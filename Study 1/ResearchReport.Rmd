@@ -1,96 +1,72 @@
 ---
-title: "Study1 pilot analysis"
+title: "Tuning strategies for random forest hyperparameters in medical applications"
 author: "Judith Neve"
-date: '2022-12-08'
-output: html_document
+date: '2022-01-10'
+output:
+  bookdown::pdf_book:
+    citation_package: biblatex
+bibliography: ["Thesis.bib"]
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
 library(tidyverse)
 library(viridis)
 library(xtable)
+library(kableExtra)
+library(bookdown)
 ```
+
+# Introduction
+
+Machine learning models are increasingly used in medicine for diagnostic and prognostic purposes [@wessler_tufts_2017] assisting patients' medical decision-making. For this purpose, high *classification accuracy* (i.e., the proportion of observations correctly classified) and *discrimination* (i.e., the ability to differentiate between classes) are insufficient: models also need to be well *calibrated* (i.e., risk predictions reflect patients' true risk) [@van_calster_calibration_2019]. Miscalibrated models can lead to over- or undertreatment if over- or underestimating patients' risks.
+
+A popular set of techniques is tree-based methods [@mitchell_machine_1997], among which random forests are particularly prevalent [@uddin_comparing_2019]. Random forests' results are influenced by hyperparameters (e.g. the minimum number of observations in a node) [@mantovani_empirical_2019], which need to be set before fitting the model. While hyperparameter software defaults sometimes lead to appropriate accuracy [@bernard_influence_2009], they can lead to severe miscalibration (work by Dunias, publication not yet available). It is then of utmost importance to identify hyperparameter tuning strategies improving calibration.
+
+Tuning identifies hyperparameter values for which a metric (e.g. accuracy) is optimal for a given model. Multiple elements need to be chosen before the tuning procedure can be carried out: the metric to optimise, the hyperparameters to tune, and the hyperparameter search algorithm. The latter two can greatly impact computation time: generally, the more hyperparameters are tuned, the larger computation time will be. Hyperparameter search algorithms may consider all possible values and combinations, or use information collected earlier in the tuning procedure to tune efficiently. Computation time is important to consider in conjunction to the improvement in model performance: greater computation times and longer training periods of models may lead to a strain on resources and increase carbon emissions. For complex models, this can be as much as five times the average emissions of a car over its lifetime [@strubell_energy_2019].
+
+Previous research suggests the most gain in random forest performance can be made by tuning the following hyperparameters: number of predictors sampled to make a split, proportion of the sample used to fit the tree, and minimum node size [@probst_tunability_2019]. Most hyperparameter search algorithms improve accuracy compared to default hyperparameters, with various effects on computational time (Figure \@ref(fig:yang-fig)) [@yang_hyperparameter_2020].
 
 ```{r}
-# load("tuneonce.RData")
-# datasets <- dat
-# validation_datasets <- validation_sets
-# performances <- all_perf %>%
-#   mutate(dataset_id = "1_1")
-# total_tuning_times <- all_tuning_time
-# load("tuneonce2.RData")
-# datasets <- rbind(datasets,
-#                   dat %>%
-#                     as.data.frame() %>%
-#                     mutate(dataset_id = "1_2"))
-# validation_datasets <- rbind(validation_datasets,
-#                              validation_sets %>%
-#                                as.data.frame() %>%
-#                                mutate(dataset_id = "1_2"))
-# performances <- rbind(performances,
-#                       all_perf %>%
-#                         mutate(dataset_id = "1_2"))
-# total_tuning_times <- c(total_tuning_times, all_tuning_time)
-# load("tuneonce3.RData")
-# datasets <- rbind(datasets,
-#                   dat %>%
-#                     as.data.frame() %>%
-#                     mutate(dataset_id = "1_3"))
-# validation_datasets <- rbind(validation_datasets,
-#                              validation_sets %>%
-#                                as.data.frame() %>%
-#                                mutate(dataset_id = "1_3"))
-# performances <- rbind(performances,
-#                       all_perf %>%
-#                         mutate(dataset_id = "1_3"))
-# total_tuning_times <- c(total_tuning_times, all_tuning_time)
-# load("tuneonce4_2datasets.RData")
-# datasets <- rbind(datasets,
-#                   dat %>%
-#                     as.data.frame() %>%
-#                     mutate(dataset_id =
-#                            recode(dataset_id,
-#                                   `1_1` = "1_4",
-#                                   `1_1` = "1_5")))
-# validation_datasets <- rbind(validation_datasets,
-#                              validation_sets %>%
-#                                as.data.frame() %>%
-#                                mutate(dataset_id =
-#                                        recode(dataset_id,
-#                                               `1_1` = "1_4",
-#                                               `1_1` = "1_5")))
-# performances <- rbind(performances,
-#                       all_perf %>%
-#                         mutate(dataset_id =
-#                            recode(dataset_id,
-#                                   `1_1` = "1_4",
-#                                   `1_1` = "1_5")))
-# total_tuning_times <- c(total_tuning_times, all_tuning_time)
+RFclass <- data.frame("OptimisationAlgorithm" = c("Default", "Grid search", "Random search", "BO-GP", "BO-TPE", "Hyperband", "BOHB", "GA", "PSO"),
+                      "Category" = c("Default", "Model-free", "Model-free", "Bayesian optimisation", "Bayesian optimisation", "Multifidelity", "Multifidelity", "Metaheuristic", "Metaheuristic"),
+                 "Accuracy" = c(90.65, 93.32, 93.38, 93.38, 93.88, 93.38, 90.38, 93.83, 93.73),
+                 "CompTime" = c(0.09, 48.62, 16.73, 20.60, 12.58, 8.89, 8.45, 19.19, 12.43)) %>% 
+  mutate(Category = factor(Category, levels = c("Default", "Model-free", "Bayesian optimisation", "Multifidelity", "Metaheuristic")))
+
+algo_pal <- viridis::plasma(n = 5)
 ```
 
+
+```{r yang-fig, fig.cap="Accuracy VS computational time for different hyperparameter tuning algorithms"}
+RFclass %>%
+  ggplot(aes(y = Accuracy, x = CompTime, col = Category)) +
+  geom_point(size = 3) +
+  labs(x = "Computational time (in seconds)",
+       y = "Accuracy (%)") +
+  theme_minimal() +
+  labs(col = "Algorithm category",
+       caption = "Adapted from Yang & Shami (2020)") +
+  theme(plot.caption = element_text(hjust = 1.65)) +
+  scale_color_manual(breaks = levels(RFclass$Category),,
+                     values = algo_pal)
+```
+
+While there has been some focus on comparing hyperparameter search algorithms, so far, no study has compared different optimisation metrics' effects on model performance or computational time. Additionally, hyperparameter tuning has only been studied with accuracy as the outcome, not calibration or discrimination, which are typically more important in clinical settings.
+
+Larger computational time does not necessarily lead to an improvement in accuracy. It is unknown whether there is a point at which continuing a search algorithm no longer leads to improvements in model calibration and discrimination. The current project will thus address the following question: what are the optimal hyperparameter tuning strategies for balancing predictive performance and computational time of tree-based methods in low-dimensional settings? There will be three simulation studies in this project to identify which hyperparameters to tune, which metric to optimise, and which search algorithm to use for optimal model performance.
+
+# Methods
+
+# Results
 
 ```{r}
 load("Data/pilot2.RData")
 rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time")])
 ```
 
-#### Check the probability distributions
-
 ```{r}
-
-```
-
-#### Check the values of tuning times
-
-```{r}
-sum(all_perf$Runtime)
-(sum(as.numeric(all_tuning_time))*60 - sum(all_perf$Runtime))
-```
-
-#### Data cleaning
-
-```{r}
+# clean data
 all_perf <- all_perf %>%
   mutate(`Tuned hyperparameters` =
            ifelse(`Tuned hyperparameters` == "",
@@ -101,7 +77,9 @@ all_perf <- all_perf %>%
 
 ## Summary table
 
-```{r}
+Table \@ref(tab:summary-table)
+
+```{r summary-table}
 summary_table <- all_perf %>%
   group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>%
   summarise(mean_AUC = mean(AUC),
@@ -111,7 +89,9 @@ summary_table <- all_perf %>%
             RMSD_slope = sqrt(mean((log(CalibrationSlope))^2)),
             mean_time = mean(Runtime),
             var_time = var(Runtime))
-summary_table
+summary_table %>% 
+  kbl(booktabs = T, caption = "Classification algorithms and imbalance corrections to be evaluated.") %>% 
+  kable_styling(latex_options = c("striped", "hold_position"))
 ```
 
 
@@ -123,7 +103,6 @@ summary_table_latex <- (all_perf %>%
             Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
             Runtime = paste0(round(mean(Runtime), 2), " (", round(sd(Runtime), 2), ")")))[c(9,2:8),] %>%
   xtable(caption = "Average performance of hyperparameter combinations")
-summary_table_latex %>% print(include.rownames = F)
 ```
 
 ```{r}
@@ -169,7 +148,7 @@ names(HP.labs) <- HP.labs
 # names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
 HP.labs <- c(HP.labs[1], sort(HP.labs[2:9]))
 
-turbo_pal <- viridis::turbo(n = 9)
+HPcomb_pal <- viridis::turbo(n = 9)
 ```
 
 
@@ -204,12 +183,12 @@ all_perf %>%
                                   size = 11)) +
   scale_color_manual(breaks = HP.labs,
                      labels = names(HP.labs),
-                     values = turbo_pal) +
+                     values = HPcomb_pal) +
   scale_shape_manual(breaks = HP.labs,
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
+#ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
@@ -243,12 +222,12 @@ all_perf %>%
                                   size = 11)) +
   scale_color_manual(breaks = HP.labs,
                      labels = names(HP.labs),
-                     values = turbo_pal) +
+                     values = HPcomb_pal) +
   scale_shape_manual(breaks = HP.labs,
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
+#ggsave("plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
@@ -273,7 +252,7 @@ all_perf %>%
   #                           names_to = "Metric",
   #                           values_to = "Performance"),
   #            size = 3)
-ggsave("plot_facetted.jpg", width = 90, height = 40, units = "cm")
+#ggsave("plot_facetted.jpg", width = 90, height = 40, units = "cm")
 ```
 
 
@@ -286,4 +265,6 @@ summary_table %>%
                names_to = "XXX",
                values_to = "MC error")
 ```
+
+# Discussion
 
