@@ -329,3 +329,24 @@ summary_table %>%
                values_to = "MC error")
 ```
 
+```{r, eval = FALSE}
+RFclass <- data.frame("OptimisationAlgorithm" = c("Default", "Grid search", "Random search", "BO-GP", "BO-TPE", "Hyperband", "BOHB", "GA", "PSO"),
+                      "Category" = c("Default", "Model-free", "Model-free", "Bayesian optimisation", "Bayesian optimisation", "Multifidelity", "Multifidelity", "Metaheuristic", "Metaheuristic"),
+                 "Accuracy" = c(90.65, 93.32, 93.38, 93.38, 93.88, 93.38, 90.38, 93.83, 93.73),
+                 "CompTime" = c(0.09, 48.62, 16.73, 20.60, 12.58, 8.89, 8.45, 19.19, 12.43)) %>% 
+  mutate(Category = factor(Category, levels = c("Default", "Model-free", "Bayesian optimisation", "Multifidelity", "Metaheuristic")))
+
+algo_pal <- viridis::plasma(n = 5)
+
+RFclass %>%
+  ggplot(aes(y = Accuracy, x = CompTime, col = Category)) +
+  geom_point(size = 3) +
+  labs(x = "Computational time (in seconds)",
+       y = "Accuracy (%)") +
+  theme_classic() +
+  labs(col = "Algorithm category",
+       caption = "Adapted from Yang & Shami (2020)") +
+  theme(plot.caption = element_text(hjust = 1.65)) +
+  scale_color_manual(breaks = levels(RFclass$Category),,
+                     values = algo_pal)
+```
