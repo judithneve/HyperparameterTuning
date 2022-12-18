@@ -12,6 +12,8 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(MASS)
+library(pROC)
 library(tidyverse)
 library(viridis)
 library(xtable)
@@ -21,7 +23,7 @@ library(bookdown)
 
 Date: 10/01/2023\
 \
-**Supervisors**: Maarten van Smeden and Zoë Dunias (Utrecht Medical Center Utrecht)\
+**Supervisors**: Maarten van Smeden and Zoe Dunias (Utrecht Medical Center Utrecht)\
 \
 Word Count: XXXX\
 \
@@ -39,7 +41,7 @@ Tuning identifies hyperparameter values for which a performance metric (e.g. acc
 
 There has been little focus on comparing tuning procedures on clinically relevant performance metrics. Previous research suggests the most gain in random forest performance can be made by tuning the number of predictors sampled to make a split and the proportion of the sample used to fit the tree [@probst_tunability_2019]. Tuning using most hyperparameter search algorithms improves accuracy compared to default hyperparameters, but can greatly increase computation time [@yang_hyperparameter_2020]; larger computational time shows no clear relationship with accuracy. So far, no study has compared different optimisation metrics' effects on model performance or computational time. 
 
-The current project will thus address the following question: what are the optimal hyperparameter tuning strategies for balancing predictive performance and computational time of tree-based methods in low-dimensional settings? There will be three simulation studies in this project to identify (1) which hyperparameters to tune, (2) which metric to optimise, and (3) which search algorithm to use for optimal model performance. Methods and preliminary results from the first study are presented in this report.
+The current project will thus address the following question: what are the optimal hyperparameter tuning strategies for balancing predictive performance and computational time of tree-based methods in low-dimensional settings? There will be three simulation studies in this project to identify (i) which hyperparameters to tune, (ii) which metric to optimise, and (iii) which search algorithm to use for optimal model performance. Methods and preliminary results from the first study are presented in this report.
 
 # Methods
 
@@ -53,9 +55,10 @@ Methods follow the ADEMP approach [@morris_using_2019].
 
 ### Population
 
-A full factorial simulation design will be used to consider the influence of data characteristics on tuning procedures. The varying factors will be the number of candidate predictors $p$ (range: 8, 16), the event fraction $EF$ (range: 0.1, 0.3, 0.5), and the sample size $N$ (range: $0.5n, n$, where $n$ is the minimum sample size required to identify effects for a given number of regression coefficients (here, 1.25$p$) and expected event fraction [@riley_calculating_2020] with an AUC of 0.8). A total of 12 (2\*3\*2) scenarios will be considered. 1,000 datasets will be generated for each scenario, yielding a total of 12,000 datasets. Preliminary results presented in this report are for 10 iterations of the $p = 8, EF = 0.5, N = n$ scenario.
+A full factorial simulation design will be used to consider the influence of data characteristics on tuning procedures. The varying factors will be the number of candidate predictors $p$ (range: 8, 16), the event fraction $EF$ (range: 0.1, 0.3, 0.5), and the sample size $N$ (range: $0.5n, n$, where $n$ is the minimum sample size required to identify effects for a given number of regression coefficients (here, 1.25$p$) and expected event fraction as calculated by @riley_calculating_2020 with an AUC of 0.8). A total of 12 (2\*3\*2) scenarios will be considered. 1,000 training datasets will be generated for each scenario, yielding a total of 12,000 datasets. Preliminary results presented in this report are for 10 iterations of the $p = 8, EF = 0.5, N = n$ scenario.
 
-Development and validation data is simulated under a logistic model with strong interactions. For each observation $i$ ($i$ = 1, ..., $N$), predictors $\mathbf{x}_i$ are drawn from a $p$-variate normal distribution with parameters detailed in Formula \ref{predictor_dist}.
+Training and validation data is simulated under a logistic model with strong interactions. For each observation $i$ ($i$ = 1, ..., $N$), predictors $\mathbf{x}_i$ are drawn from a $p$-variate normal distribution with parameters detailed in Formula \ref{predictor_dist}.
+
 ```{=tex}
 \begin{equation}
     \mathbf{x}_i \sim \text{MVN}(\mathbf{0}, \left[ {\begin{array}{ccc}
@@ -67,55 +70,100 @@ Development and validation data is simulated under a logistic model with strong 
 \end{equation}
 ```
 
-Additionally, 0.25$p$ two-way interactions will be computed, with the $j^{th}$ interaction being the product of the $j^{th}$ and the $(j+p/2)^{th}$ predictors. Then, the binary outcome $y_i$ will be drawn from a Bernoulli distribution conditional on $\mathbf{x}_i$, computed interactions, and the regression coefficients for main and interaction effects of the data generating model, hereafter called "true effect" (Formula \ref{binomial}).\begin{equation}
-    P(y_i = 1) = \frac{exp(\beta_0 + \beta*\sum_{j=1}^px_{ij} + \gamma*\sum_{j=1}^{0.25*p}x_{ij}*x_{i(j+0.5p)})}{1 + exp(\beta_0 + \beta*\sum_{j=1}^px_{ij} + \gamma*\sum_{j=1}^{0.25*p}x_{ij}*x_{i(j+0.5p)})}
+0.25$p$ two-way interactions are included, with the $j^{th}$ ($j = 1, ..., 0.25p$) interaction being the product of the $j^{th}$ and the $(j+0.5p)^{th}$ predictors. Then, the binary outcome $y_i$ is drawn from a Bernoulli distribution conditional on the predictor values (Formula \ref{binomial}).
+
+```{=tex}
+\begin{equation}
+    P(y_i = 1|\mathbf{x}_i) = \frac{exp(\beta_0 + \beta*\sum_{j=1}^px_{ij} + \gamma*\sum_{j=1}^{0.25*p}x_{ij}*x_{i(j+0.5p)})}{1 + exp(\beta_0 + \beta*\sum_{j=1}^px_{ij} + \gamma*\sum_{j=1}^{0.25*p}x_{ij}*x_{i(j+0.5p)})},
     \label{binomial}
 \end{equation}
+```
 
-A validation dataset (N = 10,000) will be generated for each event fraction and number of candidate predictors combination in order to evaluate model performances. In the most extreme scenario ($EF = 0.1, p = 32$), this yields $\frac{10,000*0.1}{1.25p} = 25$ events per variable, which is well above the 10:1 events per variable rule of thumb.
+where $\beta_0$, $\beta$, $\gamma$ are respectively the intercept, main effect regression coefficient, and interaction effect regression coefficient of the data generating model, hereafter called "true effects".
+
+A validation dataset ($N = 10,000$) is generated for each training dataset in order to evaluate model performances. In the most extreme scenario ($EF = 0.1, p = 16$), this yields $\frac{10,000*0.1}{1.25p} = 50$ events per variable, which is well above the 10:1 events per variable rule of thumb.
 
 ### True effect estimation
 
-True effects will be constant across studies. They will be determined as follows: for each combination $k$ of number of candidate predictor and event fraction, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ will be estimated using a large sample ($N$ = 100,000) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) will be set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation will use the R function \texttt{optim}, focused on minimising a loss function measuring the sum of i) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and ii) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This estimation will be done in three steps:
+True effects are determined as follows: for each combination $k$ of number of candidate predictor and event fraction, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ are estimated using a large sample ($N = 100,000$) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) are set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation uses use the R function `optim`, focused on minimising a loss function measuring the sum of (1) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and (2) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This estimation is done in three steps:
 
-```{=tex}
-\begin{enumerate}
-    \item Optimise $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ for a target AUC of 0.7.
-    \item Using the optimised $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ from step 1, optimise $\boldsymbol\gamma^{(k)}$ for a target AUC of 0.8, such that a model ignoring interactions would have an AUC of 0.7 while including the correct interactions would lead to an AUC of 0.8. $\boldsymbol\gamma^{(k)}$ will be constrained to be positive.
-    \item Using the optimised $\boldsymbol\beta^{(k)}$ and $\boldsymbol\gamma^{(k)}$, optimise $\beta_0^{(k)}$ for a target AUC of 0.8 to ensure the interactions do not alter the event fraction.
-\end{enumerate}
+1. Optimise $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ for a target AUC of 0.7.
+2. Using the optimised $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ from step 1, optimise $\boldsymbol\gamma^{(k)}$ for a target AUC of 0.8, such that a model ignoring interactions would have an AUC of 0.7 while including the correct interactions would lead to an AUC of 0.8. $\boldsymbol\gamma^{(k)}$ will be constrained to be positive.
+3. Using the optimised $\boldsymbol\beta^{(k)}$ and $\boldsymbol\gamma^{(k)}$, optimise $\beta_0^{(k)}$ for a target AUC of 0.8 to ensure the interactions do not alter the event fraction.
+
+NOTE TO MAARTEN & ZOE: this is the way the betas were generated for the results I generated, so even though we don't think this is the correct way to optimise this, I think it is better to be transparent about how it was done for now
+
+```{r}
+load("Data/betas_v2.RData")
+betas_pilot <- betas_matrix[[1]][3,] %>% round(2)
 ```
-This will be repeated 20 times and the mean of the parameters will be taken to obtain more stable estimates.
 
-Results from this numerical procedure for $\beta_0^{(k)}$, $\boldsymbol\beta^{(k)}$ and $\boldsymbol\gamma^{(k)}$ will be checked using an independently generated dataset of N = 1,000,000. It will be checked whether:
+This was repeated 20 times and the mean of the parameters was taken to obtain more stable estimates. True effects for the presented scenario were estimated to be $\beta_0$ = `r betas_pilot["intercept"]`, $\beta$ = `r betas_pilot["beta"]`, $\gamma$ = `r betas_pilot["gamma"]`.
 
-```{=tex}
-\begin{enumerate}
-    \item The observed event fraction is at a distance of at most 0.01 from the target event fraction.
-    \item The AUC of a model ignoring the interaction terms is at a distance of at most 0.025 from 0.7.
-    \item The AUC of a model including the interaction terms is at a distance of at most 0.05 from 0.8.
-    \item The estimated coefficients when fitting a logistic regression model are at a distance of at most 0.05 from the coefficients used to generate the dataset.
-\end{enumerate}
+Results from this numerical procedure for $\beta_0^{(k)}$, $\boldsymbol\beta^{(k)}$ and $\boldsymbol\gamma^{(k)}$ were checked using an independently generated dataset of $N = 100,000$. It was checked whether:
+
+1. The observed event fraction is at a distance of at most 0.01 from the target event fraction.
+2. The AUC of a model ignoring the interaction terms is at a distance of at most 0.025 from 0.7.
+3. The AUC of a model including the interaction terms is at a distance of at most 0.05 from 0.8.
+4. The estimated coefficients when fitting a logistic regression model are at a distance of at most 0.05 from the coefficients used to generate the dataset.
+
+```{r, results='hide'}
+source("GenerateBetas.R")
+start_seed <- 100
+example_n <- 1e5
+p  <- c(8, 16, 32)
+EF <- c(0.1, 0.3, 0.5)
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+ betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+)
+set.seed(3 * start_seed)
+validation_betas_matrix_noint <- validate_betas_noint(
+ betas_matrix = betas_matrix[[1]], example_n = example_n, n_predictors = p, prevalences = EF
+)
 ```
+
+```{r}
+source("DataSimFunctions.R")
+source("tuning_functions.R")
+load("Data/scenarios.RData")
+scenarios <- scenarios %>% filter(n_pred == 8, event_fraction == 0.5, prop_sample_size == 1)
+beta_validation <- sim_data(scenarios = scenarios %>% mutate(n = example_n),
+                            coefs = betas_matrix[[1]],
+                            nsim = 1) %>%
+  validation_prep("1_1")
+validation_mod <- glm(Y ~ . + X1:X5 + X2:X6,
+                      family = binomial(),
+                      data = beta_validation)
+max_coef_dev <- max(abs(round(coef(validation_mod), 2) - c(betas_pilot["intercept"], rep(betas_pilot["beta"], 8), rep(betas_pilot["gamma"], 2))))
+```
+
+
+For the presented scenario, results of these checks were as follows:
+
+1. The observed event fraction was at a distance of `r abs(round(validation_betas_matrix[3,"validation prevalence"] - 0.5, 4))` from 0.5.
+2. The AUC of a model ignoring the interaction terms was at a distance of `r abs(round(validation_betas_matrix_noint[3,"validation AUC"] - 0.7, 2))` from 0.7.
+3. The AUC of a model including the interaction terms was at a distance of `r abs(round(validation_betas_matrix[3,"validation AUC"] - 0.8, 2))` from 0.8.
+4. The estimated coefficients when fitting a logistic regression model were at a distance of at most `r max_coef_dev` from the coefficients used to generate the dataset.
+
+Condition 2 was thus not fulfilled; however, as these results are only preliminary, this discrepancy was disregarded.
+
 ## Estimands
 
 This study focuses on predictive performance for dichotomous outcome models. We also evaluate the computational time for each tuning procedure.
 
 ## Methods
 
-We will vary which hyperparameters are tuned when fitting a random forest using the R package \texttt{ranger} via the R package \texttt{caret}. We will use grid search (as is the standard in this package) to optimise classification accuracy at a probability threshold of 0.5 (as is the default in \texttt{caret}). 5-fold cross-validation will be used as part of the tuning procedure.
+We vary which hyperparameters are tuned when fitting a random forest using the R package `ranger` [@ranger] via the R package `caret` [@caret]. We use grid search (as is the standard in this package) to optimise classification accuracy at a probability threshold of 0.5 (as is the default). 5-fold cross-validation is used as part of the tuning procedure.
 
-\cite{probst_tunability_2019} found \texttt{mtry} (the number of predictors randomly sampled to make a split) and \texttt{sample.fraction} (the proportion of the data that is used to fit a single tree) to be the pair of predictors with the highest influence on accuracy. We would therefore suggest to always tune these two hyperparameters. However, \cite{scornet_tuning_2017} demonstrates that \texttt{sample.fraction} has a similar effect to and \texttt{min.node.size} (that is, the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity). As \texttt{caret} allows tuning for \texttt{min.node.size} but not for \texttt{sample.fraction} in its settings, we opt to always tune \texttt{mtry} and \texttt{min.node.size} to increase to user-friendliness of our possible findings.
+Considering all possible combinations of 5 hyperparameters would lead to $\sum_{h=0}^5\binom{5}{h} = 32$ tuning procedures on each dataset. Due to the unfeasibility of such a large-scale approach, we reduce the number of combinations we consider: @probst_tunability_2019 found `mtry` (the number of predictors randomly sampled to make a split) and `sample.fraction` (the proportion of the data that is used to fit a single tree) to be the pair of predictors with the highest influence on accuracy. We would therefore suggest to always tune these two hyperparameters. However, @scornet_tuning_2017 demonstrates that `sample.fraction` has a similar effect to `min.node.size` (that is, the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity). As `caret` allows tuning for `min.node.size` but not for `sample.fraction` in its settings, we opt to always tune `mtry` and `min.node.size` to increase user-friendliness of our findings.
 
-All combinations of the following hyperparameters will be tuned in conjunction with \texttt{mtry} and \texttt{min.node.size}:
+All combinations of the following hyperparameters will be tuned in conjunction with `mtry` and `min.node.size`:
 
-```{=tex}
-\begin{itemize}
-    \item \texttt{replace}, that is, whether the data used to fit a single tree is sampled with or without replacement.
-    \item \texttt{sample.fraction}, that is, the proportion of the data that is used to fit a single tree.
-    \item \texttt{splitrule}, that is, the way in which a split is picked.
-\end{itemize}
-```
+- `replace`, that is, whether the data used to fit a single tree is sampled with or without replacement.
+- `sample.fraction`, that is, the proportion of the data that is used to fit a single tree.
+- `splitrule`, that is, the way in which a split is picked.
+
 Default values and tuning ranges are presented in Table \ref{tab:hyp_ranges}.
 
 ```{=tex}
@@ -136,45 +184,40 @@ Default values and tuning ranges are presented in Table \ref{tab:hyp_ranges}.
     \end{tabular}
     \begin{tablenotes}
       \small
-      \item For \texttt{splitrule} = extratrees, an additional parameter should be considered regarding the number of random splits to consider. This will be set to its default of 1.
+      \item For \texttt{splitrule} = extratrees, an additional parameter should be considered regarding the number of random splits to consider. This is set to its default of 1.
     \end{tablenotes}
     \label{tab:hyp_ranges}
 \end{table}
 ```
-This leads to 16 ($\sum_{h=0}^4\binom{4}{h}$) different combinations. The number of predictors considered at each split and the sample fraction will be included in all combinations. Hyperparameters not included in a given combination will be set to their default value. In addition, a random forest will be fit using the default hyperparameters to establish the baseline. All considered combinations will be used to fit a random forest on each simulated dataset, leading to 459,000 (17\*27,000) tuning procedures being performed.
+
+This leads to 8 ($\sum_{h=0}^3\binom{3}{h}$) different combinations. Hyperparameters not included in a given combination are set to their default value. In addition, a model is built using the default hyperparameters to establish the baseline. All considered combinations are used to fit a random forest on each training dataset, leading to 90 (9\*10) tuning procedures being performed for these preliminary results.
 
 ## Performance measures
 
-For each tuning procedure performed, primary outcomes will be:
+For each tuning procedure performed, primary outcomes are:
 
-```{=tex}
-\begin{itemize}
-    \item Discrimination (AUC),
-    \item Calibration slope (calculated using \cite{benvancalster_benvancalsterclassimb_calibration_2022}),
-    \item Root mean square of the log of the calibration slope over all the runs of a scenario (RMSD(slope)), as used in \cite{van_calster_regression_2020},
-    \item Computational time.
-\end{itemize}
-```
-Secondary outcomes will be:
+- Discrimination (AUC),
+- Calibration slope (as calculated by @benvancalster_benvancalsterclassimb_calibration_2022),
+- Root mean square of the log of the calibration slope over all the runs of a scenario (RMSD(slope)), as used by @van_calster_regression_2020,
+- Computational time.
 
-```{=tex}
-\begin{itemize}
-    \item Calibration intercept,
-    \item Brier score,
-    \item Logarithmic loss,
-    \item Classification accuracy with a threshold of 0.5,
-    \item Kappa.
-\end{itemize}
-```
-Model performance metrics will be estimated using the predictions of the model on an independently generated validation set generated under the same data generating mechanisms. For each data simulation scenario and tuning procedure combination, we will compute the average and spread of each of these performance measures.
+Secondary outcomes are:
 
-We will evaluate and compare performance between hyperparameter combinations. We aim to visually assess whether certain hyperparameter combinations have a notably larger runtime compared to others, for a relatively low increase in performance. The best hyperparameter combination will be selected considering all primary outcomes.
+- Calibration intercept,
+- Brier score,
+- Logarithmic loss,
+- Classification accuracy with a threshold of 0.5,
+- Kappa.
+
+Model performance metrics are estimated using the predictions of the model on an independently generated validation set generated under the same data generating mechanisms. For each data simulation scenario and tuning procedure combination, we compute the average and spread of each of these performance measures.
+
+We evaluate and compare performance between hyperparameter combinations. We aim to visually assess whether certain hyperparameter combinations have a notably larger runtime compared to others, for a relatively low increase in performance. The best hyperparameter combination is selected considering all primary outcomes.
 
 # Results
 
 ```{r}
 load("Data/pilot2.RData")
-rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time")])
+rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time", "validation_betas_matrix_noint", "validation_betas_matrix")])
 ```
 
 ```{r}
@@ -186,36 +229,46 @@ all_perf <- all_perf %>%
                 `Tuned hyperparameters`))
 ```
 
-## Summary table
-
-Table \@ref(tab:summary-table)
-
-```{r summary-table}
-summary_table <- all_perf %>%
-  group_by(n_pred, event_fraction, sample_size_prop, `Tuned hyperparameters`) %>%
-  summarise(mean_AUC = mean(AUC),
-            var_AUC = var(AUC),
-            median_CalibrationSlope = median(CalibrationSlope),
-            IQR_slope = IQR(CalibrationSlope),
-            RMSD_slope = sqrt(mean((log(CalibrationSlope))^2)),
-            mean_time = mean(Runtime),
-            var_time = var(Runtime))
-summary_table %>% 
-  kbl(booktabs = T, caption = "Classification algorithms and imbalance corrections to be evaluated.") %>% 
-  kable_styling(latex_options = c("striped", "hold_position"))
-```
-
 ```{r}
-summary_table_latex <- (all_perf %>%
+summary_table_study1 <- all_perf %>%
   group_by(`Tuned hyperparameters`) %>% 
-  summarise(AUC = paste0(round(mean(AUC), 2), " (", round(sd(AUC), 2), ")"),
-            `Calibration slope` = paste0(round(median(CalibrationSlope), 2), " (", round(IQR(CalibrationSlope), 2), ")"),
-            Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
-            Runtime = paste0(round(mean(Runtime), 2), " (", round(sd(Runtime), 2), ")")))[c(9,2:8),] %>%
-  xtable(caption = "Average performance of hyperparameter combinations")
+  summarise(AUC_mean = round(mean(AUC), 2),
+            AUC_sd = round(sd(AUC), 2),
+            Calslope_median = round(median(CalibrationSlope), 2),
+            Calslope_IQR = round(IQR(CalibrationSlope), 2),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = round(sqrt(mean((log(CalibrationSlope))^2)), 2),
+            Runtime_mean = round(mean(Runtime), 2),
+            Runtime_sd = round(sd(Runtime), 2))
 ```
 
-```{r}
+In this section we focus on preliminary results using 10 simulated datasets for the scenario where $p = 8, EF = 0.5, N = n$. The average and spread of primary outcomes for each hyperparameter combination are presented in Table \@ref(tab:summary-table). Discrimination performance did not vary between hyperparameter combinations, with a mean AUC of `r round(mean(all_perf$AUC),2)` (SD = `r round(sd(all_perf$AUC),2)`) across all hyperparameter combinations. The data generation mechanism had an AUC of `r round(validation_betas_matrix_noint[3,"validation AUC"], 2)` without interactions and an AUC of `r round(validation_betas_matrix[3,"validation AUC"], 2)` with interactions. The obtained AUC thus shows better performance than a model not account for interactions, but this performance does not closely approach the best possible performance. Calibration performance showed much more variability (Table \@ref(tab:summary-table), Figure \@ref()): median calibration slopes for a given hyperparameter combination varied between `r min(summary_table_study1$Calslope_median)` (i.e., large overprediction of risk) when tuning only `mtry` and `min.node.size` and `r max(summary_table_study1$Calslope_median)` (i.e., large underprediction of risk) when tuning all hyperparameters. Interquartile ranges
+
+SOME COMMENTS ABOUT IT - CONSISTENT ACROSS COMBOS? WHERE ARE THERE DIFFERENCES? CAN USE A FIGURE TO BACK THIS UP
+OTHER DIFFERENCES ON SECONDARY OUTCOMES
+SYSTEMATIC OVER OR UNDERPREDICTION?
+
+
+```{r, results='asis'}
+(summary_table_study1 %>% 
+  mutate(AUC = paste0(AUC_mean, " (", AUC_sd, ")"),
+         `Calibration slope` = paste0(Calslope_median, " (", Calslope_IQR, ")"),
+         Runtime = paste0(Runtime_mean, " (", Runtime_sd, ")")) %>% 
+  select(`Tuned hyperparameters`, AUC, `Calibration slope`, `RMSD(slope)`, Runtime) %>% 
+   rbind(c("", "Mean (SD)", "Median (IQR)", "", "Mean (SD)")))[c(10, 9,1:8),] %>%
+  # mutate(`Tuned hyperparameters` = gsub(" . ", "\n+ ", `Tuned hyperparameters`)) %>% 
+  xtable(caption = "Average performance of hyperparameter combinations",
+         label = "tab:summary-table",
+         align = c(rep("|c", 5), "|c|")) %>% 
+  print.xtable(include.rownames = FALSE,
+               caption.placement = "top",
+               comment = FALSE,
+               hline.after = c(-1, 1, 10),
+               #size="\\fontsize{8pt}{8pt}\\selectfont",
+               scalebox = "0.8")
+```
+
+```{r fig}
 df_scale_setter <- tibble(
   Accuracy = rep(c(0, 1), each = 9),
   AUC = rep(c(0.5, 1), each = 9),
@@ -300,78 +353,9 @@ all_perf %>%
 #ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
 ```
 
-```{r}
-all_perf %>%
-  pivot_longer(c(Accuracy, AUC, CalibrationSlope),
-               names_to = "Metric",
-               values_to = "Performance") %>%
-  mutate(Metric = factor(Metric, levels = c("AUC", "CalibrationSlope", "Accuracy"))) %>% 
-  ggplot(aes(x = Runtime,
-             y = Performance,
-             group = `Tuned hyperparameters`)) +
-  geom_point(aes(col = `Tuned hyperparameters`,
-                 shape = `Tuned hyperparameters`),
-             size = 2) +
-  xlim(0, max(all_perf$Runtime)) +
-  geom_point(data = df_scale_setter %>% filter(Metric %in% c("Accuracy", "AUC", "CalibrationSlope")), alpha = 0) +
-  geom_hline(data = df_targets %>% filter(Metric %in% c("Accuracy", "AUC", "CalibrationSlope")), aes(yintercept = Target), col = "red", lty = "dotted") +
-  facet_wrap(~ Metric,
-             scales = "free_y",
-             labeller = labeller(Metric = Metric.labs),
-             nrow = 2) +
-  theme_classic() +
-  theme(legend.position = c(.8, .22),
-  # theme(legend.position = c(.85, .13),
-        legend.text = element_text(size = 10),
-        legend.key.size = unit(0.6, 'cm'),
-        axis.title = element_text(size = 12),
-        legend.background = element_rect(),
-        panel.spacing = unit(1.2, "lines"),
-        strip.text = element_text(colour = "black",
-                                  size = 11)) +
-  scale_color_manual(breaks = HP.labs,
-                     labels = names(HP.labs),
-                     values = HPcomb_pal) +
-  scale_shape_manual(breaks = HP.labs,
-                     labels = names(HP.labs),
-                     values = c(1, rep(16, 8)))
-
-#ggsave("plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
-```
-
-```{r}
-all_perf %>%
-  pivot_longer(AUC:CohensKappa,
-               names_to = "Metric",
-               values_to = "Performance") %>%
-  ggplot(aes(x = Runtime,
-             y = Performance)) +
-  geom_point() +
-  xlim(0, max(all_perf$Runtime)) +
-  geom_point(data = df_scale_setter, alpha = 0) +
-  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
-  facet_wrap(Metric ~ `Tuned hyperparameters`, ncol = 9, scales = "free_y") +
-  theme_classic() #+
-  # geom_point(data = summary_table %>%
-  #              dplyr::select(mean_AUC, median_CalibrationSlope, mean_time, `Tuned hyperparameters`) %>%
-  #              mutate(AUC = mean_AUC,
-  #                     CalibrationSlope = median_CalibrationSlope,
-  #                     Runtime = mean_time) %>%
-  #              pivot_longer(AUC:CalibrationSlope,
-  #                           names_to = "Metric",
-  #                           values_to = "Performance"),
-  #            size = 3)
-#ggsave("plot_facetted.jpg", width = 90, height = 40, units = "cm")
-```
-
-```{r}
-summary_table %>% 
-  pivot_longer(c(mean_AUC, median_CalibrationSlope),
-               names_to = "Metric",
-               values_to = "Performance") %>% 
-  pivot_longer(c(var_AUC, IQR_slope),
-               names_to = "XXX",
-               values_to = "MC error")
-```
 
 # Discussion
+
+\newpage
+
+# References

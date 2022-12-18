@@ -87,11 +87,11 @@ tune_hyperparameters <- function(combination, dataset) {
 validation_prep <- function(datasets, dataset_id) {
   datasets[datasets[,"dataset_id"] == dataset_id,] %>%
     as.data.frame() %>%
-    select(Y, Pred_number, Pred_value, id) %>%
+    dplyr::select(Y, Pred_number, Pred_value, id) %>%
     mutate(Pred_value = as.numeric(Pred_value),
            Y = as.factor(Y)) %>%
     pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
-    select(-id)
+    dplyr::select(-id)
 }
 
 validate_model <- function(dataset, best_hp) {
