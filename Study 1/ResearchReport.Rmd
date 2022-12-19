@@ -27,7 +27,17 @@ Date: 10/01/2023\
 \
 Word Count: XXXX\
 \
+What I don't want feedback on:
 
+-	Look of the title page
+
+What I want feedback on:
+
+-	Overall look of the report (not detailed)
+-	Do I use enough references -- are there points at which my argumentation would benefit from including a reference
+- DGM methods: lots of focus (words) taken up -- is this necessary -- should I focus on only the scenario I'm talking about
+- Talking about my results: they're preliminary -- should I be drawing conclusions as if they weren't (in terms of phrasing)?
+- I struggled with the discussion (because I don't have a lot of results to discuss?). Is it too short? Is it too repetitive? Is the end too off-topic/dramatic?
 
 \newpage
 
@@ -49,7 +59,7 @@ Methods follow the ADEMP approach [@morris_using_2019].
 
 ## Aim
 
-@probst_tunability_2019 have shown the number of predictors considered at a split and the sample fraction to be the two most influential hyperparameters on model accuracy. However, these findings only investigate the effect of tuning one or two hyperparameters at once. This study aims to extend these findings by considering more combinations of hyperparameters in order to identify the combination of hyperparameters for which tuning leads to the best predictive performance of a prediction model.
+@probst_tunability_2019 have shown the number of predictors considered at a split and the sample fraction to be the two most influential hyperparameters on model discrimination. However, these findings only investigate the effect of tuning one or two hyperparameters at once. This study aims to extend these findings by considering more combinations of hyperparameters in order to identify the combination of hyperparameters for which tuning leads to the best predictive performance of a prediction model.
 
 ## Data-generating mechanism
 
@@ -85,7 +95,7 @@ A validation dataset ($N = 10,000$) is generated for each training dataset in or
 
 ### True effect estimation
 
-True effects are determined as follows: for each combination $k$ of number of candidate predictor and event fraction, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ are estimated using a large sample ($N = 100,000$) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) are set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation uses use the R function `optim`, focused on minimising a loss function measuring the sum of (1) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and (2) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This estimation is done in three steps:
+True effects are determined as follows: for each combination $k$ of number of candidate predictor and event fraction, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ are estimated using a large sample ($N = 100,000$) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) are set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation uses use the R function `optim`, focused on minimising a loss function measuring the sum of (i) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and (ii) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This estimation is done in three steps:
 
 1. Optimise $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ for a target AUC of 0.7.
 2. Using the optimised $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ from step 1, optimise $\boldsymbol\gamma^{(k)}$ for a target AUC of 0.8, such that a model ignoring interactions would have an AUC of 0.7 while including the correct interactions would lead to an AUC of 0.8. $\boldsymbol\gamma^{(k)}$ will be constrained to be positive.
@@ -156,7 +166,7 @@ This study focuses on predictive performance for dichotomous outcome models. We 
 
 We vary which hyperparameters are tuned when fitting a random forest using the R package `ranger` [@ranger] via the R package `caret` [@caret]. We use grid search (as is the standard in this package) to optimise classification accuracy at a probability threshold of 0.5 (as is the default). 5-fold cross-validation is used as part of the tuning procedure.
 
-Considering all possible combinations of 5 hyperparameters would lead to $\sum_{h=0}^5\binom{5}{h} = 32$ tuning procedures on each dataset. Due to the unfeasibility of such a large-scale approach, we reduce the number of combinations we consider: @probst_tunability_2019 found `mtry` (the number of predictors randomly sampled to make a split) and `sample.fraction` (the proportion of the data that is used to fit a single tree) to be the pair of predictors with the highest influence on accuracy. We would therefore suggest to always tune these two hyperparameters. However, @scornet_tuning_2017 demonstrates that `sample.fraction` has a similar effect to `min.node.size` (that is, the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity). As `caret` allows tuning for `min.node.size` but not for `sample.fraction` in its settings, we opt to always tune `mtry` and `min.node.size` to increase user-friendliness of our findings.
+Considering all possible combinations of 5 hyperparameters would lead to $\sum_{h=0}^5\binom{5}{h} = 32$ tuning procedures on each dataset. Due to the unfeasibility of such a large-scale approach, we reduce the number of combinations we consider: @probst_tunability_2019 found `mtry` (the number of predictors randomly sampled to make a split) and `sample.fraction` (the proportion of the data that is used to fit a single tree) to be the pair of predictors with the highest influence on discrimination. We would therefore suggest to always tune these two hyperparameters. However, @scornet_tuning_2017 demonstrates that `sample.fraction` has a similar effect to `min.node.size` (that is, the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity). As `caret` allows tuning for `min.node.size` but not for `sample.fraction` in its settings, we opt to always tune `mtry` and `min.node.size` to increase user-friendliness of our findings.
 
 All combinations of the following hyperparameters will be tuned in conjunction with `mtry` and `min.node.size`:
 
@@ -226,7 +236,8 @@ all_perf <- all_perf %>%
   mutate(`Tuned hyperparameters` =
            ifelse(`Tuned hyperparameters` == "",
                 "None",
-                `Tuned hyperparameters`))
+                `Tuned hyperparameters`),
+         Runtime = Runtime*60)
 ```
 
 ```{r}
@@ -242,19 +253,18 @@ summary_table_study1 <- all_perf %>%
             Runtime_sd = round(sd(Runtime), 2))
 ```
 
-In this section we focus on preliminary results using 10 simulated datasets for the scenario where $p = 8, EF = 0.5, N = n$. The average and spread of primary outcomes for each hyperparameter combination are presented in Table \@ref(tab:summary-table). Discrimination performance did not vary between hyperparameter combinations, with a mean AUC of `r round(mean(all_perf$AUC),2)` (SD = `r round(sd(all_perf$AUC),2)`) across all hyperparameter combinations. The data generation mechanism had an AUC of `r round(validation_betas_matrix_noint[3,"validation AUC"], 2)` without interactions and an AUC of `r round(validation_betas_matrix[3,"validation AUC"], 2)` with interactions. The obtained AUC thus shows better performance than a model not account for interactions, but this performance does not closely approach the best possible performance. Calibration performance showed much more variability (Table \@ref(tab:summary-table), Figure \@ref()): median calibration slopes for a given hyperparameter combination varied between `r min(summary_table_study1$Calslope_median)` (i.e., large overprediction of risk) when tuning only `mtry` and `min.node.size` and `r max(summary_table_study1$Calslope_median)` (i.e., large underprediction of risk) when tuning all hyperparameters. Interquartile ranges
+In this section we focus on preliminary results using 10 simulated datasets for the scenario where $p = 8, EF = 0.5, N = n$. The average and spread of primary outcomes for each hyperparameter combination are presented in Table \@ref(tab:summary-table). Discrimination performance did not vary between hyperparameter combinations, with a mean AUC of `r round(mean(all_perf$AUC),2)` (SD = `r round(sd(all_perf$AUC),2)`) across all hyperparameter combinations. The data generation mechanism had an AUC of `r round(validation_betas_matrix_noint[3,"validation AUC"], 2)` without interactions and an AUC of `r round(validation_betas_matrix[3,"validation AUC"], 2)` with interactions. The obtained AUC values thus show better performance than a model not accounting for interactions, but this performance does not closely approach the best possible performance. Tuning does not appear to affect model discrimination.
 
-SOME COMMENTS ABOUT IT - CONSISTENT ACROSS COMBOS? WHERE ARE THERE DIFFERENCES? CAN USE A FIGURE TO BACK THIS UP
-OTHER DIFFERENCES ON SECONDARY OUTCOMES
-SYSTEMATIC OVER OR UNDERPREDICTION?
+Calibration performance showed much more variability both within and between combinations (Table \@ref(tab:summary-table), Figure \@ref(fig:study1fig)): median calibration slopes for a given hyperparameter combination varied between `r min(summary_table_study1$Calslope_median)` (i.e., large overprediction of risk) when tuning only `mtry` and `min.node.size` and `r max(summary_table_study1$Calslope_median)` (i.e., large underprediction of risk) when tuning all hyperparameters. Within a combination, interquartile ranges varied between `r min(summary_table_study1$Calslope_IQR)` and `r max(summary_table_study1$Calslope_IQR)`. Slope RMSD suggests the best calibration performance is obtained when tuning no hyperparameters (RMSD(slope) = `r min(summary_table_study1$'RMSD(slope)')`).
 
+Runtime did not vary much between different runs of a given hyperparameter combination (Table \@ref(tab:summary-table), Figure \@ref(fig:study1fig)). Large increases in runtime were observed when tuning 4 or more hyperparameters, with no observable benefit in model performance as measured by primary and secondary outcome performance measures (Figure \@ref(fig:study1fig)). Taken together, these results suggest not tuning hyperparameters yields the best performances: tuning hyperparameters does not lead to improved model performance and increases computational time.
 
 ```{r, results='asis'}
 (summary_table_study1 %>% 
   mutate(AUC = paste0(AUC_mean, " (", AUC_sd, ")"),
          `Calibration slope` = paste0(Calslope_median, " (", Calslope_IQR, ")"),
-         Runtime = paste0(Runtime_mean, " (", Runtime_sd, ")")) %>% 
-  select(`Tuned hyperparameters`, AUC, `Calibration slope`, `RMSD(slope)`, Runtime) %>% 
+         `Runtime (seconds)` = paste0(Runtime_mean, " (", Runtime_sd, ")")) %>% 
+  select(`Tuned hyperparameters`, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`) %>% 
    rbind(c("", "Mean (SD)", "Median (IQR)", "", "Mean (SD)")))[c(10, 9,1:8),] %>%
   # mutate(`Tuned hyperparameters` = gsub(" . ", "\n+ ", `Tuned hyperparameters`)) %>% 
   xtable(caption = "Average performance of hyperparameter combinations",
@@ -268,7 +278,7 @@ SYSTEMATIC OVER OR UNDERPREDICTION?
                scalebox = "0.8")
 ```
 
-```{r fig}
+```{r}
 df_scale_setter <- tibble(
   Accuracy = rep(c(0, 1), each = 9),
   AUC = rep(c(0.5, 1), each = 9),
@@ -306,7 +316,7 @@ names(Metric.labs) <- c("CalibrationSlope", "CalibrationIntercept", "BrierScore"
 
 HP.labs <- unique(all_perf$`Tuned hyperparameters`)
 names(HP.labs) <- HP.labs
-# names(HP.labs)[2] <- "mtry + sample.fraction + replace\n+ min.node.size + splitrule"
+names(HP.labs)[2] <- "mtry + sample.fraction + replace\n+ min.node.size + splitrule"
 # names(HP.labs)[4] <- "mtry + sample.fraction + min.node.size\n+ splitrule"
 # names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
 HP.labs <- c(HP.labs[1], sort(HP.labs[2:9]))
@@ -314,12 +324,12 @@ HP.labs <- c(HP.labs[1], sort(HP.labs[2:9]))
 HPcomb_pal <- viridis::turbo(n = 9)
 ```
 
-```{r}
+```{r study1fig, fig.cap="Performance of each hyperparameter tuning combination", fig.height=8, fig.width=6}
 all_perf %>%
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
-  mutate(Metric = factor(Metric, levels = c("Accuracy", "AUC", "CalibrationSlope", "BrierScore", "CalibrationIntercept", "LogarithmicLoss", "CohensKappa"))) %>% 
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalibrationSlope", "BrierScore", "CalibrationIntercept", "Accuracy", "LogarithmicLoss", "CohensKappa"))) %>% 
   ggplot(aes(x = Runtime,
              y = Performance,
              group = `Tuned hyperparameters`)) +
@@ -332,29 +342,35 @@ all_perf %>%
              scales = "free_y",
              labeller = labeller(Metric = Metric.labs),
              # nrow = 2) +
-             ncol = 3) +
+             ncol = 2) +
   theme_classic() +
   # theme(legend.position = c(.88, .2),
-  theme(legend.position = c(.85, .13),
+  theme(legend.position = c(.75, .1),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, 'cm'),
-        axis.title = element_text(size = 12),
         legend.background = element_rect(),
         panel.spacing = unit(1.2, "lines"),
-        strip.text = element_text(colour = "black",
-                                  size = 11)) +
+        plot.caption = element_text(hjust = 0)) +
   scale_color_manual(breaks = HP.labs,
                      labels = names(HP.labs),
                      values = HPcomb_pal) +
   scale_shape_manual(breaks = HP.labs,
                      labels = names(HP.labs),
-                     values = c(1, rep(16, 8)))
-
-#ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
+                     values = c(1, rep(16, 8))) +
+  labs(caption = "Red dotted lines show ideal performance.",
+       x = "Runtime (seconds)")
 ```
 
-
 # Discussion
+
+In this report, we studied the impact of the choice of hyperparameters to tune on model performance and computational time. This was done as the first step to identify optimal hyperparameter tuning strategies for balancing predictive performance and computational time of tree-based methods in low-dimensional settings. We presented preliminary results computed using only one data simulation scenario and ten simulation runs. These preliminary results suggest tuning no hyperparameter may lead to the best performances as tuning was not found to lead to any improvements in model performance. These results are yet to be expanded by considering more simulation runs and data generating scenarios.
+
+These results are inconsistent with previous research: @probst_tunability_2019 showed tuning the number of predictors considered at a split and the proportion of the data used to build a model to have an important impact on model discrimination, whereas tuning these two hyperparameters did not lead to any notable differences compared to not performing any tuning in our study. This inconsistency may be simply a product of chance due to the small scale of these results. However, this could also be due to the data generating mechanism: as all datasets are generated following the same mechanism, it is possible that this mechanism aligns well with hyperparameter defaults. This can be explored further by considering datasets generated using more predictors, predictors with varying effects, smaller event fractions, or smaller sample sizes.
+
+The reason for this inconsistency may also be due to using accuracy as a default optimisation metric. @bernard_influence_2009 show hyperparameter defaults lead to satisfactory accuracy, which may in turn lead tuning procedures focusing on accuracy to resort to hyperparameter defaults. Candidate hyperparameter values may also be determined in a too-simplistic manner. While grid search is most commonly used, it suffers from some severe limitations. Candidate values for each hyperparameter are determined by the user, leading to possibly missing the optimal value in low-dimensional settings [@van_calster_regression_2020] [@vansmedenSampleSizeBinary2019] and to computation time increasing exponentially the more hyperparameters are tuned or candidate values are considered. This highlights possible large systematic problems in random forest tuning procedures, which are heavily focused on obtaining good accuracy in high-dimensional settings. It is then of utmost importance to identify ways in which these tuning procedures can be adapted for low-dimensional, clinical settings, for which performance is better measured using discrimination and calibration.
+
+This project will aim to have value by providing guidelines regarding possible trade-offs between computationally intensive tuning procedures and model performances. In addition to exploring the effect of choice of hyperparameters that are tuned, the optimisation metric and hyperparameter candidate value generation algorithms will also be examined. While this project has so far focused on random forests, other tree-based methods may also be explored in future.
+
 
 \newpage
 
