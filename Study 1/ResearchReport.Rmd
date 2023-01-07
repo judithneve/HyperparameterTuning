@@ -7,7 +7,7 @@ output:
     toc: false
 bibliography: ["Thesis.bib"]
 header-includes:
-  \usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+  \usepackage[backend=biber,style=nature,sorting=none]{biblatex}
 ---
 
 ```{r setup, include=FALSE}
@@ -153,7 +153,7 @@ We varied the hyperparameters that were tuned when fitting a random forest model
 Considering all possible combinations of 5 hyperparameters leads to 32 tuning procedures on each dataset. Due to the unfeasibility of such a large-scale approach, we reduced the number of combinations studied: only hyperparameter combinations including at least `mtry` (the number of predictors randomly sampled to make a split) and `min.node.size` (the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity) were considered. Other hyperparameters that could be included in combinations were (i) `replace` (whether the data used to fit a single tree is sampled with or without replacement), (ii) `sample.fraction` (the proportion of the data that is used to fit a single tree), and (iii) `splitrule` (the way in which a split is picked). Default values and tuning ranges are presented in Table \ref{tab:hyp_ranges}.
 
 ```{=tex}
-\begin{table}[]
+\begin{table}[tb]
     \centering
     \caption{Hyperparameter tuning ranges}
     \begin{tabular}{ccc}
@@ -267,22 +267,43 @@ summary_table_study1 <- all_perf %>%
 Preliminary results using 10 simulated datasets for the scenario where $p = 8, EF = 0.5, N = n$ are presented here. The average and spread of primary outcomes for each hyperparameter combination are presented in Table \@ref(tab:summary-table).
 
 ```{r, results='asis'}
-(summary_table_study1 %>% 
+tab <- summary_table_study1 %>% 
+  arrange(Runtime_mean, desc = FALSE) %>% 
   mutate(AUC = paste0(AUC_mean, " (", AUC_sd, ")"),
          `Calibration slope` = paste0(Calslope_median, " (", Calslope_IQR, ")"),
-         `Runtime (seconds)` = paste0(Runtime_mean, " (", formatC(Runtime_sd, digits = 3, flag = "0", format = "fg"), ")")) %>% 
-  select(`Tuned hyperparameters`, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`) %>% 
-   rbind(c("", "Mean (SD)", "Median (IQR)", "", "Mean (SD)")))[c(10, 9,1:8),] %>%
+         `Runtime (seconds)` = paste0(
+           format(Runtime_mean, nsmall = 1),
+           " (",
+           str_pad(format(Runtime_sd, nsmall = 1, trim = TRUE), 4, pad = "0"),
+           ")"
+           )) %>% 
+  select(`Tuned hyperparameters`, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- paste0(
+  paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+  paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+  '\\\\',
+  "\\multicolumn{1}{c}{}",
+  paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean(SD)"), "}", collapse = ""),
+  '\\\\'
+)
+
+tab %>%
   # mutate(`Tuned hyperparameters` = gsub(" . ", "\n+ ", `Tuned hyperparameters`)) %>% 
   xtable(caption = "Average performance of hyperparameter combinations",
          label = "tab:summary-table",
          align = c(rep("l", 2), rep("c", 3), "r")) %>% 
   print.xtable(include.rownames = FALSE,
                caption.placement = "top",
+               table.placement = "b",
                comment = FALSE,
-               hline.after = c(-1, 1, 10),
+               hline.after = c(-1, 0, 9),
                #size="\\fontsize{8pt}{8pt}\\selectfont",
-               scalebox = "0.8")
+               scalebox = "0.8",
+               add.to.row = addtorow,
+               include.colnames = F)
 ```
 
 These results suggest that varying hyperparameter tuning combinations had very limited effects on discrimination, with a mean AUC of `r round(mean(all_perf$AUC),2)` (SD = `r round(sd(all_perf$AUC),2)`) across all hyperparameter combinations. A large effect was observed on model calibration and computational time. Model calibration varied considerably both within and between combinations (Table \@ref(tab:summary-table), Figure \@ref(fig:study1fig)). The best calibration performance was obtained by tuning `mtry`, `replace`, `min.node.size`, and `splitrule`, which had a median calibration slope of `r summary_table_study1$'Calslope_median'[which.min(abs(summary_table_study1$'Calslope_median' - 1))]`. This performance was highly variable, such that the best RMSD(slope) was obtained when tuning no hyperparameters (RMSD(slope) = `r min(summary_table_study1$'RMSD(slope)')`).
