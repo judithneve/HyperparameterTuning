@@ -17,6 +17,7 @@ library(viridis)
 library(xtable)
 library(kableExtra)
 library(bookdown)
+options(scipen=999)
 ```
 
 ```{=tex}
@@ -42,16 +43,19 @@ library(bookdown)
 \end{center}
 \begin{Large}
 \begin{center}
-    \vspace{0.3\textwidth}
+    \vspace{0.2\textwidth}
     \textbf{Supervisors}\\
     Dr. Maarten van Smeden\\
     Zo\"e Dunias\\
 \end{center}
 \end{Large}
 
-\vspace{0.1\textwidth}
+\vspace{0.05\textwidth}
 \begin{large}
-\textbf{Word count}: 2498/2500
+\begin{center}
+  \textbf{Word count}\\
+  2498/2500
+\end{center}
 \end{large}
 \end{titlepage}
 ```
@@ -106,7 +110,11 @@ A validation dataset ($N = 10,000$) was generated for each training dataset in o
 
 ### True effect estimation
 
-True effects were determined for each unique combination of $p$ and $EF$. Let $k$ denote a given combination. For each combination, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ were estimated using a large sample ($N = 100,000$) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) were set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation used the R function `optim`, focused on minimising a loss function measuring the sum of (i) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and (ii) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This estimation was done in three steps:
+True effects were determined for each unique combination of $p$ and $EF$. Let $k$ denote a given combination. For each combination, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ were estimated using a large sample ($N = 100,000$) approximation. All main effects ($\boldsymbol\beta^{(k)}$) and interaction effects ($\boldsymbol\gamma^{(k)}$) were set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_p^{(k)}$ and $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The estimation used the R function `optim`, focused on minimising a loss function measuring the sum of (i) the absolute difference between the targeted AUC and the observed AUC in the simulated dataset, and (ii) the absolute difference between the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset.
+
+\newpage
+
+This estimation was done in three steps:
 
 1. Optimise $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ for a target AUC of 0.7.
 2. Using the optimised $\beta_0^{(k)}$ and $\boldsymbol\beta^{(k)}$ from step 1, optimise $\boldsymbol\gamma^{(k)}$ for a target AUC of 0.8, such that a model ignoring interactions would have an AUC of 0.7 while including the correct interactions would lead to an AUC of 0.8. $\boldsymbol\gamma^{(k)}$ were constrained to be positive.
@@ -320,7 +328,7 @@ tab %>%
          align = c(rep("l", 2), rep("c", 3), "r")) %>% 
   print.xtable(include.rownames = FALSE,
                caption.placement = "top",
-               table.placement = "b",
+               table.placement = "tb",
                comment = FALSE,
                hline.after = c(-1, 0, 9),
                #size="\\fontsize{8pt}{8pt}\\selectfont",
@@ -370,7 +378,7 @@ all_perf %>%
 
 Runtime did not vary much between different runs of a given hyperparameter combination (Table \@ref(tab:summary-table), Figure \@ref(fig:study1fig)). Large increases in runtime were observed when tuning 4 or more hyperparameters, with no consistent benefit to model performance as measured by primary and secondary outcome performance measures (Figure \@ref(fig:study1fig)).
 
-Secondary outcomes showed similar patterns (Figure \@ref(fig:study1fig). Classification accuracy, Brier score, and Cohen's Kappa showed very little variation within and between hyperparameter combinations. Calibration intercept and logarithmic loss showed variations within, but not between, hyperparameter combinations.
+Secondary outcomes showed similar patterns (Figure \@ref(fig:study1fig)). Classification accuracy, Brier score, and Cohen's Kappa showed very little variation within and between hyperparameter combinations. Calibration intercept and logarithmic loss showed variations within, but not between, hyperparameter combinations.
 
 # Discussion
 
