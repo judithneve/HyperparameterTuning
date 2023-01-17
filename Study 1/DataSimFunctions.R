@@ -97,7 +97,7 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
         mutate(sample_size_prop = scenarios$prop_sample_size[i],
                n_pred           = n_pred_temp,
                event_fraction   = scenarios$event_fraction[i],
-               dataset_id       = paste(i, j, sep = "_")) %>%
+               dataset_id       = paste(i, j, sep = "_")) %>% # scenario number then dataset number within the scenario
         as.matrix()
       
       dat <- rbind(

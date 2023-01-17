@@ -1,0 +1,75 @@
+---
+title: "Testing beta generation"
+author: "Judith Neve"
+date: '2023-01-16'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(pmsampsize)
+library(tidyr)
+library(MASS)
+library(dplyr)
+library(pROC)
+set.seed(0070661)
+```
+
+## Population
+
+```{r}
+p  <- c(8, 16)
+EF <- c(0.1, 0.3, 0.5)
+N  <- c(0.5, 1) # scrapped x2
+```
+
+```{r}
+source("DataSimFunctions.R")
+```
+
+```{r}
+# scenarios <- make_scenarios(n_pred = p, event_fraction = EF, sample_size = N)
+# save(scenarios, file = "scenarios.RData")
+load("Data/scenarios.RData")
+
+# n_datasets <- 1000
+n_datasets <- 10
+```
+
+## True effect estimation
+
+```{r}
+source("GenerateBetas.R")
+```
+
+```{r}
+start_seed <- 100
+example_n <- 1e5
+n_beta_repetitions <- 20
+
+# b1 <- generate_betas(example_n = example_n, n_predictors = p, prevalences = EF, initial_betas = initial_betas)
+# b2 <- generate_betas(example_n = example_n, n_predictors = p, prevalences = EF, initial_betas = initial_betas)
+
+betas_matrix <- mean_multiple_betas(
+  n_predictors = p, prevalences = EF, n_beta_repetitions = n_beta_repetitions,
+  example_n = example_n, start_seed = start_seed
+)
+```
+
+```{r}
+load("betas_v2.RData")
+#
+set.seed(2 * start_seed)
+validation_betas_matrix <- validate_betas(
+ betas_matrix = b2[1:6,], example_n = example_n, n_predictors = p, prevalences = EF
+)
+validation_betas_matrix
+validation_betas_matrix_noint
+# 
+# save(betas_matrix, file = "betas_v2.RData")
+
+# TODO: fix beta generation
+# TODO: fix beta validation
+```
+
