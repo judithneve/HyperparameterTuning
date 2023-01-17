@@ -126,7 +126,7 @@ mean_multiple_betas <- function(n_predictors,       # a vector of the numbers of
   }
   mean_betas_matrix <- betas_matrix_total / n_beta_repetitions
   
-  return(list(mean_matrix = mean_betas_matrix, betas_matrices = betas_matrices))
+  return(mean_betas_matrix)
 }
 
 # a function to check the coefficients give the required AUC & prevalences
@@ -154,7 +154,7 @@ validate_betas <- function(betas_matrix, example_n, n_predictors, prevalences, t
       prev_target <- prevalences[i]
       cat("prevalence = ", prev_target, "\n")
       
-      betas <- betas_matrix[((j-1)*length(n_predictors) + i),3:5]
+      betas <- betas_matrix[validation_row,3:5]
       # Calculate probabilities
       linear_int <- betas[1] +
         betas[2]*rowSums(X_valid) +
