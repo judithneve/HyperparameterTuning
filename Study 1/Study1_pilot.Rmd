@@ -47,7 +47,7 @@ save(scenarios, file = "Data/scenarios.RData")
 ## True effect estimation
 
 ```{r}
-source("GenerateBetas.R")
+source("GenerateBetas_RR.R")
  
 start_seed <- 100
 example_n <- 1e5

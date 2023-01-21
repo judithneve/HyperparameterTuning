@@ -126,7 +126,7 @@ betas_pilot <- betas_matrix[[1]][3,] %>% round(2)
 This was repeated 20 times. The mean of the parameters was taken to obtain more stable estimates. True effects for the scenario presented in this report were $\beta_0$ = `r betas_pilot["intercept"]`, $\beta$ = `r betas_pilot["beta"]`, $\gamma$ = `r betas_pilot["gamma"]`.
 
 ```{r, results='hide'}
-source("GenerateBetas.R")
+source("GenerateBetas_RR.R")
 start_seed <- 100
 example_n <- 1e5
 p  <- c(8, 16, 32)
