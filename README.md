@@ -26,6 +26,16 @@
     
 ├── Study 1
 
+    ├── Data - folder containing simulated data
+    
+        ├── betas.RData - contains the regression coefficients as computed by chunks 1-5 of Study1_pilot.Rmd (approx. 3 hours' runtime) - NOTE: the beta-generating functions have changed so this is no longer up-to-date. Use the GenerateBetas.R file from Dec. 2, 2022 to correctly reproduce this file.
+        
+        ├── pilot2.RData - contains the R environment obtained by running Study1_pilot.Rmd (approx. 19 hours' runtime) - NOTE: chunks 4 and 5 can be skipped to reduce to 16 hours.
+        
+        ├── scenarios.RData - contains the full information on scenarios (following sample size calculations) as computed by chunks 1-4 of Study1_pilot.Rmd (approx. 10 minutes' runtime) - NOTE: the beta-generating functions have changed so this is no longer up-to-date. Use the GenerateBetas.R file from Dec. 2, 2022 to correctly reproduce this file.
+    
+    ├── Protocol_presentation.pdf - rendered version of a presentation given at the Julius Centrum's method meeting on Nov. 14, 2022
+
 ├── .gitignore - defines files that do not need tracking
 
 ├── Thesis.Rproj - project that contains all files
