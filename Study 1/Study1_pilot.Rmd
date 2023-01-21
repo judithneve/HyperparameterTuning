@@ -131,7 +131,7 @@ ctrl <- trainControl(
 ```
 
 ```{r}
-source("tuning_functions.R")
+source("TuningFunctions.R")
 source("PerformanceMetrics.R")
 ```
 

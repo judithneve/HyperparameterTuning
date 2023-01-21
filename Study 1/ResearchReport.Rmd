@@ -143,7 +143,7 @@ validation_betas_matrix_noint <- validate_betas_noint(
 
 ```{r}
 source("DataSimFunctions.R")
-source("tuning_functions.R")
+source("TuningFunctions.R")
 load("Data/scenarios.RData")
 scenarios <- scenarios %>% filter(n_pred == 8, event_fraction == 0.5, prop_sample_size == 1)
 set.seed(4*start_seed)
