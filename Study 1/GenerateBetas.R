@@ -110,7 +110,7 @@ mean_multiple_betas <- function(n_predictors,       # a vector of the numbers of
   # A row per predictor/event fraction scenario
   betas_matrix_total <- matrix(0, nrow = length(n_predictors)*length(prevalences), ncol = 5)
   initial_betas <- matrix(0, nrow = length(n_predictors)*length(prevalences), ncol = 3)
-  # betas_matrices <- list()
+  betas_matrices <- list()
   
   for (k in 1:n_beta_repetitions){
     set.seed(start_seed + k)
@@ -121,12 +121,12 @@ mean_multiple_betas <- function(n_predictors,       # a vector of the numbers of
     )
     initial_betas <- betas_matrix[,3:5] # change the initial value for the next generation of beta
     print(betas_matrix)
-    # betas_matrices[[k]] <- betas_matrix
+    betas_matrices[[k]] <- betas_matrix
     betas_matrix_total <- betas_matrix_total + betas_matrix
   }
   mean_betas_matrix <- betas_matrix_total / n_beta_repetitions
   
-  return(mean_betas_matrix)
+  return(list(mean_betas_matrix = mean_betas_matrix, betas_matrices = betas_matrices))
 }
 
 # a function to check the coefficients give the required AUC & prevalences
@@ -189,4 +189,111 @@ validate_betas <- function(betas_matrix, example_n, n_predictors, prevalences, t
                                            "validation AUC (no interaction)", "validation AUC (interaction)",
                                            "validation prevalence")
   return(validated_AUC_prev_matrix)
+}
+
+############################""
+
+## TRY 2 ##
+
+loss_function <- function(betas, X, X_int, AUC, AUC_target = 0.7, AUC_target_int = 0.8, prev_target){
+  AUC_previous <- AUC
+  AUC_int_previous <- AUC
+  
+  # Calculate probabilities
+  linear_int <- betas[1] +
+    betas[2]*rowSums(X) +
+    betas[3]*rowSums(X_int)
+  linear <- betas[1] +
+    betas[2]*rowSums(X)
+  
+  prob_int <- 1 / (1 + exp(-linear_int))
+  prob <- 1 / (1 + exp(-linear))
+  true_y <- rbinom(n = example_n, size = 1, prob = prob_int)
+  
+  prev <- mean(true_y)
+  if (prev == 0){
+    AUC <- AUC_previous
+    AUC_int <- AUC_int_previous
+  }
+  else {
+    AUC <- roc(response = true_y, predictor = prob, quiet = TRUE)$auc
+    AUC_int <- roc(response = true_y, predictor = prob_int, quiet = TRUE)$auc
+  }
+  
+  e <- (AUC - AUC_target)^2 + (AUC_int - AUC_target_int)^2 + (prev - prev_target)^2
+  
+  return(e)
+}
+
+# function to make betas: calls the loss function above
+generate_betas <- function(example_n,       # a large number: we generate betas based on a large sample
+                           n_predictors,    # a vector of the numbers of predictors we consider
+                           prevalences,     # a vector of the numbers of prevalences we consider
+                           initial_betas,   # a vector of length 3
+                           AUC_target = 0.7,
+                           AUC_target_int = 0.8){
+  
+  betas_matrix <- matrix(NA, ncol = 2+3, nrow = length(prevalences)*length(n_predictors)) # empty matrix to put coefs in
+  betas_matrix_row <- 0
+  
+  for (j in 1:length(n_predictors)){
+    current_predictor <- n_predictors[j]
+    cat("predictor = ", current_predictor, "\n")
+    
+    # Specify means of the predictors
+    mus <- c(rep(0, times = current_predictor)) 
+    
+    # Create covariance matrix of the predictors
+    covariance_matrix <- matrix(0.2, nrow = current_predictor, ncol = current_predictor) # Covariances of 0.2
+    diag(covariance_matrix) <- rep(1, times = current_predictor) # Replace diagonal of matrix with 1's (variances)
+    
+    # Generate predictors
+    X <- mvrnorm(n = example_n, mu = mus, Sigma = covariance_matrix)
+    X_int <- interaction_matrix(X)
+    
+    # generate for the prevalences
+    for (i in 1:length(prevalences)){
+      betas_matrix_row <- betas_matrix_row + 1
+      AUC <- 0.5
+      prev_target <- prevalences[i]
+      cat("prevalence = ", prev_target, "\n")
+      
+      initial_beta <- initial_betas[((j-1)*length(n_predictors) + i),] # initial beta for the correct p-EF combo
+      optim_betas <- optim(par = initial_beta, 
+                           fn = loss_function,
+                           control = list(maxit = 1e4),
+                           # method = "L-BFGS-B", # constrain optimisation
+                           # lower = c(-5, -1, -1),
+                           # upper = c(5, 1, 1),
+                           AUC = AUC,
+                           AUC_target = AUC_target,
+                           AUC_target_int = AUC_target_int,
+                           prev_target = prev_target,
+                           X = X,
+                           X_int = X_int
+      )$par
+      
+      # optim_gamma <- optim(par = initial_beta[3],
+      #                      fn = loss_function,
+      #                      control = list(maxit = 1e4),
+      #                      lower = 0,
+      #                      upper = 1,
+      #                      method = "Brent",
+      #                      AUC = AUC,
+      #                      AUC_target = AUC_target_int,
+      #                      prev_target = prev_target,
+      #                      interaction = TRUE,
+      #                      fixed_betas = optim_betas,
+      #                      X = X,
+      #                      X_int = X_int
+      # )$par
+      
+      # store the optimal values and associated settings
+      betas_matrix[betas_matrix_row, 3:5] <- optim_betas
+      betas_matrix[betas_matrix_row, 1] <- current_predictor
+      betas_matrix[betas_matrix_row, 2] <- prev_target
+    }
+  }
+  colnames(betas_matrix) <- c("n_predictor","prevalence","intercept", "beta", "gamma")
+  return(betas_matrix)
 }
