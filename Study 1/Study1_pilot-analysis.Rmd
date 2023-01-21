@@ -72,14 +72,13 @@ library(xtable)
 
 ```{r}
 load("Data/pilot2.RData")
-load("Data/betas_v2.RData")
 rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time")])
 ```
 
 #### Check the probability distributions
 
 ```{r}
-load("Data/betas_v2.RData")
+load("Data/betas.RData")
 
 beta <- betas_matrix[[1]][3,3:5]
 
@@ -253,7 +252,7 @@ all_perf %>%
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("plot_grouped2.jpg", width = 30, height = 15, units = "cm")
+ggsave("Plots/plot_grouped.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
@@ -292,7 +291,7 @@ all_perf %>%
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
+# ggsave("Plots/plot_grouped_top3.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
@@ -317,7 +316,7 @@ all_perf %>%
   #                           names_to = "Metric",
   #                           values_to = "Performance"),
   #            size = 3)
-ggsave("plot_facetted.jpg", width = 90, height = 40, units = "cm")
+# ggsave("Plots/plot_facetted.jpg", width = 90, height = 40, units = "cm")
 ```
 
 
