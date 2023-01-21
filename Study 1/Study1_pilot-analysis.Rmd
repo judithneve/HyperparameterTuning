@@ -252,7 +252,7 @@ all_perf %>%
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8)))
 
-ggsave("Plots/plot_grouped.jpg", width = 30, height = 15, units = "cm")
+# ggsave("Plots/plot_grouped.jpg", width = 30, height = 15, units = "cm")
 ```
 
 ```{r}
