@@ -119,7 +119,7 @@ True effects were determined for each unique combination of $p$ and $EF$. Let $k
 3. Using the optimised $\boldsymbol\beta^{(k)}$ and $\boldsymbol\gamma^{(k)}$, optimise $\beta_0^{(k)}$ for a target AUC of 0.8 to ensure the interactions do not alter the event fraction.
 
 ```{r}
-load("Data/betas_v2.RData")
+load("Data/betas.RData")
 betas_pilot <- betas_matrix[[1]][3,] %>% round(2)
 ```
 
