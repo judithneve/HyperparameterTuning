@@ -186,7 +186,7 @@ end_tuning <- Sys.time()
 
 all_tuning_time <- end_tuning - start_tuning
 
-save.image("Data/pilot2.RData")
+save.image("Data/pilot.RData")
 ```
 
 

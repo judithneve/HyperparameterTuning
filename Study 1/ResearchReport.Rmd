@@ -220,7 +220,7 @@ All analyses were conducted using R version 4.1.2 [@base].
 # Results
 
 ```{r}
-load("Data/pilot2.RData")
+load("Data/pilot.RData")
 rm(list=ls()[!ls() %in% c("dat", "validation_sets", "all_perf", "all_tuning_time", "validation_betas_matrix_noint", "validation_betas_matrix")])
 ```
 
