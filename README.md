@@ -49,6 +49,10 @@
     ├── Thesis.bib - bibliography file used for the report
     
     ├── TuningFunctions.R - file containing functions to tune random forests
+    
+    ├── sessionInfo.R - file generating the sessionInfo.txt file
+    
+    ├── sessionInfo.txt - file containing information regarding system, R, and package versions used
 
 ├── .gitignore - defines files that do not need tracking
 
