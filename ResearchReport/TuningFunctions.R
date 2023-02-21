@@ -84,16 +84,6 @@ tune_hyperparameters <- function(combination, dataset) {
   c((all_mods %>% arrange(desc(Accuracy)))[1,c(1:3, 8:9)], time = tuning_time)
 }
 
-validation_prep <- function(datasets, dataset_id) {
-  datasets[datasets[,"dataset_id"] == dataset_id,] %>%
-    as.data.frame() %>%
-    dplyr::select(Y, Pred_number, Pred_value, id) %>%
-    mutate(Pred_value = as.numeric(Pred_value),
-           Y = as.factor(Y)) %>%
-    pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
-    dplyr::select(-id)
-}
-
 validate_model <- function(dataset, best_hp) {
   ranger(as.factor(Y) ~ .,
          data = dataset %>% select(-id, -sample_size_prop, -n_pred, -event_fraction, -dataset_id),

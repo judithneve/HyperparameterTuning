@@ -35,7 +35,7 @@ make_scenarios <- function(n_pred, event_fraction, sample_size, cstat = 0.8) {
 ## Make interactions
 
 interaction_matrix <- function(X, n_pred = ncol(X), prop_int = 0.25) {
-  int_term_2 <- n_pred/2
+  int_term_2 <- n_pred/4
   n_int      <- n_pred*prop_int
   
   X_int      <- matrix(NA, nrow = nrow(X), ncol = n_int)
@@ -45,6 +45,23 @@ interaction_matrix <- function(X, n_pred = ncol(X), prop_int = 0.25) {
   }
   
   return(X_int)
+}
+
+## Linear function
+
+linear <- function(betas, X, interaction = TRUE) {
+  X_int <- interaction_matrix(X)
+  if (interaction) {
+    out <- betas[1] +
+      betas[2]*rowSums(X[,1:(ncol(X)/2)]) +
+      2*betas[2]*rowSums(X[,(ncol(X)/2+1):(ncol(X)*3/4)]) +
+      betas[3]*rowSums(X_int)
+  } else {
+    out <- betas[1] +
+      betas[2]*rowSums(X[,1:(ncol(X)/2)]) +
+      2*betas[2]*rowSums(X[,(ncol(X)/2+1):(ncol(X)*3/4)])
+  }
+  return(out)
 }
 
 ## Simulate data
@@ -76,24 +93,14 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
       
       dat_temp[,1:n_pred_temp] <- X
       
-      X_int <- interaction_matrix(X)
-      X <- cbind(1, X, X_int) %>% as.matrix()
-      
-      intercept <- betas[3]
-      beta <- betas[4]
-      gamma <- betas[5]
-      beta <- c(
-        intercept,
-        rep(beta, n_pred_temp),
-        rep(gamma, n_pred_temp*0.25)
-      )
-      prob <- exp(X %*% beta) / (1 + exp(X %*% beta))
+      linear_comb <- linear(betas[3:5], X)
+      prob <- 1 / (1 + exp(-linear_comb))
       dat_temp[,"Y"] <- rbinom(sample_size_temp, 1, prob)
       
       dat_temp <- dat_temp %>%
         as.data.frame() %>%
         mutate(id = 1:sample_size_temp) %>% 
-        pivot_longer(-c(Y, id), names_to = "Pred_number", values_to = "Pred_value") %>%
+        pivot_longer(-c(Y, id), names_to = "Pred_number", values_to = "Pred_value") %>% 
         mutate(sample_size_prop = scenarios$prop_sample_size[i],
                n_pred           = n_pred_temp,
                event_fraction   = scenarios$event_fraction[i],
@@ -109,5 +116,12 @@ sim_data <- function(scenarios, coefs, nsim = 1000, seed = 0070661) {
   return(dat)
 }
 
-
-  
+validation_prep <- function(datasets, dataset_id) {
+  datasets[datasets[,"dataset_id"] == dataset_id,] %>%
+    as.data.frame() %>%
+    dplyr::select(Y, Pred_number, Pred_value, id) %>%
+    mutate(Pred_value = as.numeric(Pred_value),
+           Y = as.factor(Y)) %>%
+    pivot_wider(names_from = Pred_number, values_from = Pred_value) %>% 
+    dplyr::select(-id)
+}
