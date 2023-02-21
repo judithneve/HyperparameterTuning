@@ -1,5 +1,3 @@
-start <- Sys.time()
-
 ##### Setup #####
 library(MASS)    # for mvrnorm
 library(dplyr)   # data wrangling
@@ -11,11 +9,8 @@ source("DataSimFunctions.R")
 source("TuningFunctions.R")
 source("PerformanceMetricsFunctions.R")
 
-job_args <- c(1, rep(0, 12))
-
 job_id <- job_args[1] %>% as.numeric()
 included_scenarios <- job_args[2:13] %>% as.logical()
-# included_scenarios[3] <- TRUE
 
 start_seed <- job_id*100
 set.seed(start_seed)
@@ -154,5 +149,3 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
 
 filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, ".rds")
 saveRDS(out, file = filename)
-
-end <- Sys.time()
