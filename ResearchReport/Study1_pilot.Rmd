@@ -56,7 +56,7 @@ n_beta_repetitions <- 20
 
 # regression coefficients numerical estimation
 betas_matrix <- mean_multiple_betas(
-  n_predictors = n_pred, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
+  n_predictors = p, prevalences = event_fraction, n_beta_repetitions = n_beta_repetitions,
   example_n = example_n, start_seed = start_seed
 )
 # validation of regression coefficients
