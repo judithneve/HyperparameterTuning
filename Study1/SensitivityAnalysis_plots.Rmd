@@ -137,3 +137,74 @@ select_sample.frac %>%
   theme_classic()
 ```
 
+
+# mtry
+
+```{r mtry sens data}
+load("Data/select_mtry.RData")
+```
+
+```{r}
+select_mtry %>% 
+  group_by(dataset_id) %>% 
+  mutate(best_mtry = (min(deviance) == deviance)) %>% 
+  filter(best_mtry) %>% 
+  filter(mtry == min(mtry)) %>% 
+  group_by(EF, n) %>% 
+  mutate(med  = median(mtry),
+         mean = mean(mtry)) %>% 
+  ggplot(aes(x = mtry, fill = factor(n))) +
+  geom_histogram(binwidth = 1) +
+  facet_wrap(~ n + EF,
+             scales = "free_x") +
+  # geom_vline(aes(xintercept = n*EF*0.25), linewidth = 1.2, col = "pink") +
+  # geom_vline(aes(xintercept = med), col = "blue") +
+  # geom_vline(aes(xintercept = mean), col = "red") +
+  theme_classic()
+```
+
+```{r}
+per_2 <- select_mtry %>% 
+  filter(mtry %in% seq(0, 16, by = 2)[-1]) %>% 
+  group_by(dataset_id) %>% 
+  filter(min(deviance, na.rm = TRUE) == deviance) %>% 
+  filter(mtry == min(mtry))
+
+per_1 <- select_mtry %>% 
+  filter(mtry %in% seq(0, 16, by = 1)[-1]) %>% 
+  group_by(dataset_id) %>% 
+  filter(min(deviance, na.rm = TRUE) == deviance) %>% 
+  filter(mtry == min(mtry))
+
+compare <- data.frame(
+  dataset_id = per_1$dataset_id,
+  mtry_1 = per_1$mtry,
+  deviance_1 = per_1$deviance,
+  mtry_2 = per_2$mtry,
+  deviance_2 = per_2$deviance
+)
+```
+
+```{r}
+compare_long <- compare %>%
+  mutate(scenario = rep(1:6, each = 100)) %>% 
+  pivot_longer(cols = c("mtry_1", "mtry_2"), names_to = "step", values_to = "mtry") %>%
+  mutate(deviance = ifelse(step == "mtry_1", deviance_1, deviance_2)) %>% 
+  dplyr::select(-deviance_1, -deviance_2) %>% 
+  mutate(step = recode(step,
+                       "mtry_1" = 1,
+                       "mtry_2" = 2))
+head(compare_long)
+```
+
+```{r}
+compare_long %>% 
+  ggplot(aes(x = factor(step), y = deviance)) +
+  geom_violin() +
+  geom_boxplot() +
+  geom_line(data = compare_long %>%
+              filter(dataset_id %in% sample(compare$dataset_id, 120)),
+            mapping = aes(group = dataset_id)) +
+  facet_wrap(~ factor(scenario), scales = "free")
+```
+
