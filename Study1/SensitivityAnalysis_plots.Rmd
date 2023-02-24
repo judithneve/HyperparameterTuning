@@ -156,8 +156,8 @@ select_mtry %>%
   ggplot(aes(x = mtry, fill = factor(n))) +
   geom_histogram(binwidth = 1) +
   facet_wrap(~ n + EF,
-             scales = "free_x") +
-  # geom_vline(aes(xintercept = n*EF*0.25), linewidth = 1.2, col = "pink") +
+             scales = "free_y") +
+  geom_vline(xintercept = 8, linewidth = 1.2) +
   # geom_vline(aes(xintercept = med), col = "blue") +
   # geom_vline(aes(xintercept = mean), col = "red") +
   theme_classic()
