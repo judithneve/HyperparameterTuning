@@ -3,6 +3,9 @@ deviance <- function(data, lev = NULL, model = NULL) {
   obs  <- factor_to_outcome(data$obs)
   pred <- data$pos
   
+  pred[pred == 0] <- 1e-16
+  pred[pred == 1] <- 1-1e-16
+  
   dev <- -2*sum(obs*log(pred) + (1-obs)*log(1-pred))
   
   c(Deviance = dev)
