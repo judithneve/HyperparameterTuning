@@ -19,6 +19,9 @@ deviance <- function(data, lev = NULL, model = NULL) {
   obs  <- as.numeric(data$obs) - 1
   pred <- data$pos
   
+  pred[pred == 0] <- min(0.0001, min(pred[pred != 0]))
+  pred[pred == 1] <- max(0.9999, max(pred[pred != 1]))
+  
   dev <- -2*sum(obs*log(pred) + (1-obs)*log(1-pred))
   
   c(Deviance = dev)
@@ -89,7 +92,7 @@ set.seed(start_seed)
 select_min.node.size <- min.node.size_sensitivity(
   scenarios = scenarios,
   betas = betas_matrix,
-  n_datasets = 10
+  n_datasets = 50
 )
 
 # save the resulting data frames
