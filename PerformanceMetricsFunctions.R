@@ -37,6 +37,10 @@ brier <- function(probs, outcome) {
 # Logloss
 logloss <- function(probs, outcome) {
   outcome <- factor_to_outcome(outcome)
+  
+  probs[probs == 0] <- 1e-16
+  probs[probs == 1] <- 1-1e-16
+  
   -mean(outcome*log(probs) + (1-outcome)*log(1-probs))
 }
 
