@@ -4,11 +4,11 @@
 #SBATCH --output="./Study1/Data/sim/study1_out.txt"
 
 #SBATCH --ntasks=1
-#SBATCH --time=12:00:00
+#SBATCH --time=18:00:00
 #SBATCH --mem-per-cpu=20
 #SBATCH --mail-user=j.a.nevedemevergnies@uu.nl
 #SBATCH --mail-type=ALL
 
-#SBATCH --array=1-12
+#SBATCH --array=1-60
 
-srun Rscript "./Study1/Study1_onescenario_execute_test.R" $SLURM_ARRAY_TASK_ID
+srun Rscript "./Study1/Study1_execute.R" $SLURM_ARRAY_TASK_ID 16

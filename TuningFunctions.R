@@ -37,11 +37,9 @@ tune_hyperparameters <- function(dataset, tunegrid, sf_candidates, replace_candi
       mod_performance <- rbind(mod_performance,
                                mods[[length_list]]$results %>%
                                  filter(Deviance == min(Deviance, na.rm = TRUE)))
-      print(mod_performance)
     }
   }
   best_mod <- which.min(mod_performance$Deviance)
-  print(best_mod)
   final_mod <- mods[[best_mod]]
   # NOTE: COULD POSSIBLY SHORTEN TO OVERWRITE MODELS THAT ARE LESS GOOD
   
