@@ -150,5 +150,5 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
 
 ##### Save #####
 
-filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, ".rds")
+filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
