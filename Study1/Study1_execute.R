@@ -65,7 +65,7 @@ nrow_output <- nrow(hyperparameter_combinations)
 out <- data.frame(
   start_seed     = rep(start_seed,     nrow_output),
   n              = rep(sample_size,    nrow_output),
-  n_prop         = rep(n_pred,         nrow_output),
+  n_prop         = rep(n_prop,         nrow_output),
   p              = rep(n_pred,         nrow_output),
   EF             = rep(event_fraction, nrow_output),
   intercept      = rep(betas[1],       nrow_output),
