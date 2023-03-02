@@ -6,5 +6,5 @@
 #SBATCH --mem-per-cpu=20
 #SBATCH --mail-user=j.a.nevedemevergnies@uu.nl
 #SBATCH --mail-type=ALL
-#SBATCH --array=1-60
+#SBATCH --array=61-300
 srun Rscript "./Study1/Study1_execute.R" $SLURM_ARRAY_TASK_ID 8
