@@ -92,9 +92,7 @@ This is not possible as of yet.
 
     ├── SensitivityAnalysis_plots.Rmd - visual examination of the sensitivity analysis files to determine the tuning grid
 
-    ├── Study1_execute.R - script generating data for study 1: the effect of tuning combination on model performance - one run of this script generates one observation for each scenario
-
-    ├── Study1_onescenario_execute.R - script generating data for study 1: the effect of tuning combination on model performance - one run of this script generates one observation for one scenario (selected at random)
+    ├── Study1_execute.R - script generating data for study 1: the effect of tuning combination on model performance - one run of this script generates one observation for one scenario
 
 ├── .gitignore - defines files that do not need tracking
 
@@ -115,6 +113,10 @@ This is not possible as of yet.
 ├── TuningFunctions.R - file containing functions to tune random forests
 
 ├── bibliography.bib - file containing information for all references used in this project
+
+├── study1_16pred_1-?.sh - files used to run a batch of observations for the 16 predictors scenarios
+
+├── study1_8pred_1-?.sh - files used to run a batch of observations for the 8 predictors scenarios
 
 
 Note: folders for study 2 and study 3 will be added when those studies begin.
