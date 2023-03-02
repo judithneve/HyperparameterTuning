@@ -44,20 +44,31 @@ logloss <- function(probs, outcome) {
   -mean(outcome*log(probs) + (1-outcome)*log(1-probs))
 }
 
+# Accuracy
+accuracy <- function(pred, outcome) {
+  correct_predictions <- sum(pred == outcome)
+  total_predictions <- length(pred)
+  correct_predictions / total_predictions
+}
+
 # all metrics
-performance <- function(probs, outcome) {
+performance <- function(probs, pred, outcome) {
   AUC <- roc(response = outcome, predictor = probs, quiet = TRUE)$auc
   calib <- calibration(probs, outcome)
   CalSlope <- calib[2]
   CalInt <- calib[1]
   Brier <- brier(probs, outcome)
   LogLoss <- logloss(probs, outcome)
+  acc <- accuracy(pred, outcome)
+  kappa <- cohen.kappa(cbind(pred, outcome))$weighted.kappa
   
   c(
     AUC = AUC,
     CalibrationSlope = CalSlope,
     CalibrationIntercept = CalInt,
     BrierScore = Brier,
-    LogarithmicLoss = LogLoss
+    LogarithmicLoss = LogLoss,
+    Accuracy = acc,
+    CohensKappa = kappa
     )
 }

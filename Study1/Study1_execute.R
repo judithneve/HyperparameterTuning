@@ -4,10 +4,10 @@ print(job_args)
 ##### Setup #####
 library(MASS)    # for mvrnorm
 library(dplyr)   # data wrangling
-# library(tidyr)   # pivot functions
 library(ranger)  # random forests
 library(caret)   # tuning
 library(pROC)    # AUC calculations
+library(psych)   # cohen's kappa
 source("DataSimFunctions.R")
 source("TuningFunctions.R")
 source("PerformanceMetricsFunctions.R")
@@ -78,7 +78,9 @@ out <- data.frame(
   CalSlope       = rep(NA,             nrow_output),
   CalIntercept   = rep(NA,             nrow_output),
   BrierScore     = rep(NA,             nrow_output),
-  LogLoss        = rep(NA,             nrow_output)
+  LogLoss        = rep(NA,             nrow_output),
+  Accuracy       = rep(NA,             nrow_output),
+  CohensKappa    = rep(NA,             nrow_output)
 )
 row_out <- 0
 
@@ -139,13 +141,14 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
   ##### Assess performance #####
   
   # fit best model on the validation set
-  pred <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "prob")$pos
+  pred    <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "prob")$pos
+  classif <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "raw")
   # evaluate the performance based on my metrics
-  perf <- performance(pred, val_dat$Y)
+  perf <- performance(pred, classif, val_dat$Y)
   
   out[row_out,"fold_seed"] <- mod$fold_seed
   out[row_out,"time"] <- tuning_time
-  out[row_out,12:16] <- perf
+  out[row_out,12:18] <- perf
 }
 
 ##### Save #####
