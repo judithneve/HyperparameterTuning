@@ -84,6 +84,16 @@ out <- data.frame(
 )
 row_out <- 0
 
+nrow_pred <- nrow(hyperparameter_combinations)*large_sample
+out_pred <- data.frame(
+  start_seed     = rep(start_seed, nrow_pred),
+  hp_combination = rep(NA,         nrow_pred),
+  prob           = rep(NA,         nrow_pred),
+  pred           = rep(NA,         nrow_pred),
+  obs            = rep(NA,         nrow_pred)
+)
+row_pred <- 0
+
 # start the simulation
 ##### Generate data #####
 # generate a dataset for each scenario
@@ -97,7 +107,9 @@ val_dat <- simulate_data(large_sample, n_pred, event_fraction, betas)
 for (combination in 1:nrow(hyperparameter_combinations)) {
   print(hyperparameter_combinations[combination,])
   row_out <- row_out + 1
-  out[row_out,"hp_combination"] <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
+  hp_comb <- paste(colnames(hyperparameter_combinations)[as.logical(hyperparameter_combinations[combination,])], collapse = " + ")
+  out[row_out,"hp_combination"] <- hp_comb
+  out_pred[(row_pred + 1):(row_pred + large_sample),"hp_combination"] <- hp_comb
   
   if (hyperparameter_combinations[combination,"mtry"]) {
     mtry_candidates <- 1:n_pred
@@ -149,9 +161,17 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
   out[row_out,"fold_seed"] <- mod$fold_seed
   out[row_out,"time"] <- tuning_time
   out[row_out,12:18] <- perf
+  
+  out_pred[(row_pred + 1):(row_pred + large_sample),"prob"] <- pred
+  out_pred[(row_pred + 1):(row_pred + large_sample),"pred"] <- as.character(classif)
+  out_pred[(row_pred + 1):(row_pred + large_sample),"obs"]  <- as.character(val_dat$Y)
+  row_pred <- row_pred + large_sample
 }
 
 ##### Save #####
 
 filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
+
+filename_pred <- paste0("Study1/Data/sim/preds/study1_run", job_id, "_", p, ".rds")
+saveRDS(out_pred, file = filename_pred)
