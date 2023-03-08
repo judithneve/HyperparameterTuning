@@ -52,13 +52,15 @@ accuracy <- function(pred, outcome) {
 }
 
 # all metrics
-performance <- function(probs, pred, outcome) {
+performance <- function(probs, outcome) {
   AUC <- roc(response = outcome, predictor = probs, quiet = TRUE)$auc
   calib <- calibration(probs, outcome)
   CalSlope <- calib[2]
   CalInt <- calib[1]
   Brier <- brier(probs, outcome)
   LogLoss <- logloss(probs, outcome)
+  
+  pred <- ifelse(probs < 0.5, "neg", "pos") %>% factor()
   acc <- accuracy(pred, outcome)
   kappa <- cohen.kappa(cbind(pred, outcome))$weighted.kappa
   

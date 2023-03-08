@@ -89,7 +89,6 @@ out_pred <- data.frame(
   start_seed     = rep(start_seed, nrow_pred),
   hp_combination = rep(NA,         nrow_pred),
   prob           = rep(NA,         nrow_pred),
-  pred           = rep(NA,         nrow_pred),
   obs            = rep(NA,         nrow_pred)
 )
 row_pred <- 0
@@ -153,17 +152,15 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
   ##### Assess performance #####
   
   # fit best model on the validation set
-  pred    <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "prob")$pos
-  classif <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "raw")
+  pred <- predict(mod$model, newdata = val_dat[,-ncol(val_dat)], type = "prob")$pos
   # evaluate the performance based on my metrics
-  perf <- performance(pred, classif, val_dat$Y)
+  perf <- performance(pred, val_dat$Y)
   
   out[row_out,"fold_seed"] <- mod$fold_seed
   out[row_out,"time"] <- tuning_time
   out[row_out,12:18] <- perf
   
   out_pred[(row_pred + 1):(row_pred + large_sample),"prob"] <- pred
-  out_pred[(row_pred + 1):(row_pred + large_sample),"pred"] <- as.character(classif)
   out_pred[(row_pred + 1):(row_pred + large_sample),"obs"]  <- as.character(val_dat$Y)
   row_pred <- row_pred + large_sample
 }
@@ -173,5 +170,5 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
 filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
 
-filename_pred <- paste0("Study1/Data/sim/preds/study1_run", job_id, "_", p, ".rds")
+filename_pred <- paste0("Study1/Data/preds/study1_run", job_id, "_", p, ".rds")
 saveRDS(out_pred, file = filename_pred)
