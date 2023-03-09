@@ -60,7 +60,9 @@ performance <- function(probs, outcome) {
   Brier <- brier(probs, outcome)
   LogLoss <- logloss(probs, outcome)
   
-  pred <- ifelse(probs < 0.5, "neg", "pos") %>% factor()
+  pred <- ifelse(probs < 0.5, 0, 1) %>%
+    factor(levels = c(0, 1),
+           labels = c("neg", "pos"))
   acc <- accuracy(pred, outcome)
   kappa <- cohen.kappa(cbind(pred, outcome))$weighted.kappa
   
