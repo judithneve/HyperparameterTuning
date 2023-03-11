@@ -1,6 +1,6 @@
 #!/bin/bash
-#SBATCH --job-name=jneve_study1
-#SBATCH --output="./Study1/Data/sim/study1_out.txt"
+#SBATCH --job-name=16pred_10each
+#SBATCH --output="./Study1/Data/study1_out.txt"
 #SBATCH --ntasks=1
 #SBATCH --time=30:00:00
 #SBATCH --mem-per-cpu=20
