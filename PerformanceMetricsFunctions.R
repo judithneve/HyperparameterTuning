@@ -2,7 +2,10 @@
 
 factor_to_outcome <- function(factor) {
   outcome <- as.numeric(factor)
-  outcome <- ifelse(all(outcome %in% c(0, 1)), outcome, outcome - 1)
+  if (!all(outcome %in% c(0, 1))) {
+    outcome <- outcome - 1
+  }
+  return(outcome)
 }
 
 # Calibration curves + intercepts (without CI) -- taken from Ben van Calster -- https://github.com/benvancalster/classimb_calibration/blob/main/simulation%20study/Simulation/performance_measures_wo_eci.R
