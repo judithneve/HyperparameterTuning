@@ -170,7 +170,7 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
 filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
 
-if ((job_id %% 10) == 0) {
+if ((ceiling(job_id / 6) %% 10) == 0) {
   filename_pred <- paste0("Study1/Data/preds/study1_run", job_id, "_", p, ".rds")
   saveRDS(out_pred, file = filename_pred)
 }
