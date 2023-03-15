@@ -8,23 +8,24 @@ library(dplyr)   # data wrangling
 library(ranger)  # random forests
 library(caret)   # tuning
 library(pROC)    # AUC calculations
+library(psych)
 source("DataSimFunctions.R")
 source("TuningFunctions.R")
 source("PerformanceMetricsFunctions.R")
 
 job_id <- job_args[1] %>% as.numeric()
-p      <- job_args[2] %>% as.numeric()
+# p      <- job_args[2] %>% as.numeric()
 
-start_seed <- job_id*100 + p + 2
+start_seed <- job_id*100 #+ p + 2
 set.seed(start_seed)
 
 # load in scenario + coef
 load("DGM_data/scenarios.RData")
-scenarios <- scenarios %>%
-  filter(n_pred == p)
+# scenarios <- scenarios %>%
+#   filter(n_pred == p)
 load("DGM_data/betas.RData")
 
-selected_scenario <- ifelse(job_id %% 6 == 0, 6, job_id %% 6)
+selected_scenario <- ifelse(job_id %% 12 == 0, 12, job_id %% 12)
 
 scenarios      <- scenarios[selected_scenario,]
 sample_size    <- scenarios$n
@@ -43,7 +44,7 @@ metrics <- c("Deviance", "BrierScore", "logLoss", "AUC", "CalInt", "CalSlope", "
 
 # randomise the order in which metrics are run
 metrics_permutation <- sample(1:length(metrics), length(metrics))
-metrics <- metrics[metrics_permutation,]
+metrics <- metrics[metrics_permutation]
 
 # make the grid
 tunegrid <- expand.grid(
@@ -188,6 +189,6 @@ filename <- paste0("Study2/Data/sim/study2_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
 
 if ((ceiling(job_id / 6) %% 10) == 0) {
-  filename_pred <- paste0("Study2/Data/preds/study2_run", job_id, "_", p, ".rds")
+  filename_pred <- paste0("Study2/Data/preds/study2_preds_run", job_id, "_", p, ".rds")
   saveRDS(out_pred, file = filename_pred)
 }

@@ -36,7 +36,7 @@ AUC_opt <- function(data, lev = NULL, model = NULL) {
   obs  <- data$obs
   pred <- data$pos
   
-  auc <- 1 - roc(response = obs, predictor = pred, quiet = TRUE)$auc
+  auc <- roc(response = obs, predictor = pred, quiet = TRUE)$auc
   
   c(AUC = auc)
 }
@@ -54,10 +54,10 @@ cal_int <- function(data, lev = NULL, model = NULL) {
     pred[pred == 0] <- min(pred[pred != 0]) /2 
   }
   
-  cal_int <- glm(obs ~ 1,
+  intercept_model <- glm(obs ~ 1,
                  offset = log(pred/(1-pred)),
-                 family = "binomial") %>%
-    coef()
+                 family = "binomial")
+  cal_int <- coef(intercept_model)
   
   c(CalInt = cal_int^2)
 }
@@ -75,11 +75,11 @@ cal_slope <- function(data, lev = NULL, model = NULL) {
     pred[pred == 0] <- min(pred[pred != 0]) /2 
   }
   
-  cal_sl <- glm(obs ~ log(pred/(1-pred)),
-                 family = "binomial") %>%
-    coef()[2]
+  slope_model <- glm(obs ~ log(pred/(1-pred)),
+                 family = "binomial")
+  cal_sl <- coef(slope_model)[2]
   
-  c(CalInt = cal_sl)
+  c(CalInt = log(cal_sl)^2)
 }
 
 
