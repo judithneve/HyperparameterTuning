@@ -58,7 +58,8 @@ ctrl <- trainControl(
   method = "cv",
   number = 5,
   summaryFunction = deviance,
-  classProbs = TRUE
+  classProbs = TRUE,
+  allowParallel = FALSE
 )
 
 nrow_output <- nrow(hyperparameter_combinations)

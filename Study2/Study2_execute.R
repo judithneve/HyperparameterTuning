@@ -15,7 +15,7 @@ source("PerformanceMetricsFunctions.R")
 job_id <- job_args[1] %>% as.numeric()
 p      <- job_args[2] %>% as.numeric()
 
-start_seed <- job_id*100 + p
+start_seed <- job_id*100 + p + 2
 set.seed(start_seed)
 
 # load in scenario + coef
@@ -39,7 +39,7 @@ large_sample <- 1e5
 ##### Tuning setup #####
 
 # which metric are we optimising?
-metrics <- c("Deviance", "BrierScore", "LogLoss", "AUC", "CalInt", "CalSlope")
+metrics <- c("Deviance", "BrierScore", "logLoss", "AUC", "CalInt", "CalSlope", "Accuracy", "Kappa")
 
 # randomise the order in which metrics are run
 metrics_permutation <- sample(1:length(metrics), length(metrics))
@@ -54,23 +54,34 @@ tunegrid <- expand.grid(
 
 nrow_output <- length(metrics)
 out <- data.frame(
-  start_seed   = rep(start_seed,     nrow_output),
-  n            = rep(sample_size,    nrow_output),
-  n_prop       = rep(n_prop,         nrow_output),
-  p            = rep(n_pred,         nrow_output),
-  EF           = rep(event_fraction, nrow_output),
-  intercept    = rep(betas[1],       nrow_output),
-  beta         = rep(betas[1],       nrow_output),
-  gamma        = rep(betas[3],       nrow_output),
-  metric       = rep(NA,             nrow_output),
-  time         = rep(NA,             nrow_output),
-  AUC          = rep(NA,             nrow_output),
-  CalSlope     = rep(NA,             nrow_output),
-  CalIntercept = rep(NA,             nrow_output),
-  BrierScore   = rep(NA,             nrow_output),
-  LogLoss      = rep(NA,             nrow_output)
+  start_seed     = rep(start_seed,     nrow_output),
+  n              = rep(sample_size,    nrow_output),
+  n_prop         = rep(n_prop,         nrow_output),
+  p              = rep(n_pred,         nrow_output),
+  EF             = rep(event_fraction, nrow_output),
+  intercept      = rep(betas[1],       nrow_output),
+  beta           = rep(betas[1],       nrow_output),
+  gamma          = rep(betas[3],       nrow_output),
+  metric         = rep(NA,             nrow_output),
+  time           = rep(NA,             nrow_output),
+  AUC            = rep(NA,             nrow_output),
+  CalSlope       = rep(NA,             nrow_output),
+  CalIntercept   = rep(NA,             nrow_output),
+  BrierScore     = rep(NA,             nrow_output),
+  LogLoss        = rep(NA,             nrow_output),
+  Accuracy       = rep(NA,             nrow_output),
+  CohensKappa    = rep(NA,             nrow_output)
 )
 row_out <- 0
+
+nrow_pred <- length(metrics)*large_sample
+out_pred <- data.frame(
+  start_seed = rep(start_seed, nrow_pred),
+  metric     = rep(NA,         nrow_pred),
+  prob       = rep(NA,         nrow_pred),
+  obs        = rep(NA,         nrow_pred)
+)
+row_pred <- 0
 
 # start the simulation
 ##### Generate data #####
@@ -86,6 +97,7 @@ for (metric in metrics) {
   print(metric)
   row_out <- row_out + 1
   out[row_out,"metric"] <- metric
+  out_pred[(row_pred + 1):(row_pred + large_sample),"metric"] <- metric
   
   # set up the CV function
   if (metric == "Deviance") {
@@ -93,7 +105,8 @@ for (metric in metrics) {
       method = "cv",
       number = 5,
       summaryFunction = deviance,
-      classProbs = TRUE
+      classProbs = TRUE,
+      allowParallel = FALSE
     )
   }
   if (metric == "BrierScore") {
@@ -101,15 +114,8 @@ for (metric in metrics) {
       method = "cv",
       number = 5,
       summaryFunction = brier_opt,
-      classProbs = TRUE
-    )
-  }
-  if (metric == "LogLoss") {
-    ctrl <- trainControl(
-      method = "cv",
-      number = 5,
-      summaryFunction = logloss_opt,
-      classProbs = TRUE
+      classProbs = TRUE,
+      allowParallel = FALSE
     )
   }
   if (metric == "AUC") {
@@ -117,7 +123,8 @@ for (metric in metrics) {
       method = "cv",
       number = 5,
       summaryFunction = AUC_opt,
-      classProbs = TRUE
+      classProbs = TRUE,
+      allowParallel = FALSE
     )
   }
   if (metric == "CalInt") {
@@ -125,7 +132,8 @@ for (metric in metrics) {
       method = "cv",
       number = 5,
       summaryFunction = cal_int,
-      classProbs = TRUE
+      classProbs = TRUE,
+      allowParallel = FALSE
     )
   }
   if (metric == "CalSlope") {
@@ -133,7 +141,17 @@ for (metric in metrics) {
       method = "cv",
       number = 5,
       summaryFunction = cal_slope,
-      classProbs = TRUE
+      classProbs = TRUE,
+      allowParallel = FALSE
+    )
+  }
+  if (metric %in% c("logLoss", "Accuracy", "Kappa")) {
+    ctrl <- trainControl(
+      method = "cv",
+      number = 5,
+      # summaryFunction = logloss_opt,
+      classProbs = TRUE,
+      allowParallel = FALSE
     )
   }
   
@@ -142,7 +160,7 @@ for (metric in metrics) {
                data = dat,
                method = "ranger",
                metric = metric,
-               maximize = FALSE,
+               maximize = ifelse(metric %in% c("Accuracy", "Kappa", "AUC"), TRUE, FALSE),
                trControl = ctrl,
                tuneGrid = tunegrid)
   end_tune   <- Sys.time()
@@ -157,10 +175,19 @@ for (metric in metrics) {
   perf <- performance(pred, val_dat$Y)
   
   out[row_out,"time"] <- tuning_time
-  out[row_out,11:15] <- perf
+  out[row_out,11:17] <- perf               ### TODO: check cols
+  
+  out_pred[(row_pred + 1):(row_pred + large_sample),"prob"] <- pred
+  out_pred[(row_pred + 1):(row_pred + large_sample),"obs"]  <- as.character(val_dat$Y)
+  row_pred <- row_pred + large_sample
 }
 
 ##### Save #####
 
 filename <- paste0("Study2/Data/sim/study2_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
+
+if ((ceiling(job_id / 6) %% 10) == 0) {
+  filename_pred <- paste0("Study2/Data/preds/study2_run", job_id, "_", p, ".rds")
+  saveRDS(out_pred, file = filename_pred)
+}
