@@ -1,0 +1,567 @@
+---
+title: "Sneak peek at results"
+author: "Judith Neve"
+date: '2023-02-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Read in primary data
+
+```{r}
+df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
+  paste0("./Data/sim/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows()
+
+df <- df %>% 
+  mutate(hp_combination =
+           ifelse(hp_combination == "",
+                "None",
+                hp_combination) %>%
+           factor(),
+         time = time*60)
+```
+
+# Primary data checks
+
+```{r}
+df_info <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
+  paste0("./Data/sim/", .) %>% 
+  file.info()
+
+df_info <- paste0("./Data/sim/study1_onescenario_run", c(301:1500), "_8.rds") %>% 
+  file.info() # no rerun needed: from 03-14, 13:00
+df_info <- paste0("./Data/sim/study1_onescenario_run", c(52,94,130,166,202,304,454,478,562,568,586,706,856,868), "_16.rds") %>%
+  file.info()
+```
+
+
+```{r}
+unique(df$start_seed) %>% length()
+expected_seeds <- c((1:2400)*100 + 8, (1:900)*100 + 16)
+expected_seeds[!(expected_seeds %in% unique(df$start_seed))]
+(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()
+((expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()) %% 6
+
+unique(df$fold_seed) %>% length()
+summary(df)
+```
+
+```{r}
+failed <- c(6416, 7616, 8216, 10016, 19016, 22016, 22616, 23216, 23816, 24416, 25016, 25616, 26216, 26816, 27416, 28016, 28616, 29216, 29816,
+            30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
+            5216, 9416, 13016, 16616, 20216, 30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816) %>%
+  unique()
+```
+
+
+# Check time it took to rerun failed
+
+```{r}
+df %>%
+  filter(start_seed %in% failed) %>% 
+  group_by(start_seed) %>% 
+  summarise(time = sum(time)/3600)
+```
+
+# Time considerations
+
+```{r}
+df_time <- list.files(path = "./Data/sim/archive/", pattern = ".rds")[-1] %>%
+  paste0("./Data/sim/archive/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows()
+  
+time <- df_time %>% 
+  group_by(start_seed, p, EF, n) %>% 
+  summarise(total_time = sum(time)/60)
+
+df %>%
+  group_by(start_seed, p, EF, n) %>%
+  summarise(total_time = sum(time)/60) %>% 
+  group_by(p, EF, n) %>% 
+  summarise(time = mean(total_time/60),
+            sd_time = sd(total_time)) %>% 
+  full_join(time) %>% 
+  select(p, EF, n, first_time = total_time, mean_time = time, sd_time) %>% 
+  mutate(diff_time = first_time - mean_time)
+
+df %>%
+  filter(n == 1523) %>% 
+  group_by(start_seed) %>%
+  summarise(total_time = sum(time)/60) %>% 
+  ggplot(aes(x = total_time)) +
+  geom_histogram()
+
+
+df %>%
+  filter(n == 1523) %>% 
+  group_by(start_seed) %>%
+  summarise(total_time = sum(time)/3600) %>%
+  filter(total_time > 27)
+```
+
+# Cool plots
+
+```{r scale setting}
+# set the min and max value for the y-axis of each facet
+df_scale_setter <- tibble(
+  AUC = rep(c(0.5, 1), each = 9),
+  BrierScore = rep(c(0, 1), each = 9),
+  CalIntercept = rep(c(-1, 1), each = 9),
+  CalSlope = rep(c(0, 5), each = 9),
+  LogLoss = rep(c(0, 1), each = 9),
+  Accuracy = rep(c(0, 1), each = 9),
+  CohensKappa = rep(c(0, 1), each = 9),
+  time = 0,
+  hp_combination = rep(unique(df$hp_combination), 2)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+# information about what the "ideal" measure is
+df_targets <- tibble(
+  AUC = 1,
+  BrierScore = 0,
+  CalIntercept = 0,
+  CalSlope = 1,
+  LogLoss = 0,
+  Accuracy = 1,
+  CohensKappa = 1,
+  time = 0,
+  hp_combination = unique(df$hp_combination)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Target") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+df_timelimits <- expand.grid(
+  hp_combination = unique(df$hp_combination),
+  p              = c(8, 16),
+  EF             = c(0.1, 0.3, 0.5),
+  n_prop         = c(0.5, 1),
+  Metric         = factor(c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa"), levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")),
+  Performance    = 0
+) %>% 
+  mutate(time = ifelse(p == 8,
+                       max(df %>% filter(p == 8) %>% pull(time)),
+                       max(df %>% filter(p == 16) %>% pull(time))),
+         scenario = paste(n_prop, p, EF)) %>% 
+  arrange(p)
+
+Metric.labs <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa")
+names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AUC", "Accuracy", "CohensKappa")
+
+SummaryMetric.labs <- c("AUC", "Calibration slope", "RMSD(slope)")
+names(SummaryMetric.labs) <- c("AUC_mean", "Calslope_median", "RMSD(slope)")
+
+# change labels so the plot looks nice
+HP.labs <- unique(df$hp_combination)
+names(HP.labs) <- HP.labs
+# names(HP.labs)[4] <- "mtry + sample.fraction + min.node.size\n+ splitrule"
+# names(HP.labs)[6] <- "mtry + sample.fraction + replace\n+ min.node.size"
+HP.labs <- c(HP.labs[which(HP.labs == "None")], sort(HP.labs[which(HP.labs != "None")]))[c(1,2,3,9,4,5,6,8,7)]
+
+# define the colour palette
+HPcomb_pal <- viridis::turbo(n = 9)
+```
+
+```{r scenario by metric}
+# make a plot
+plot_sc_met <- df %>%
+  group_by(n_prop, p, EF) %>% 
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = hp_combination)) +
+  geom_point(aes(col = hp_combination,
+                 shape = hp_combination)) +
+  # xlim(0, max(df$time)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_point(data = df_timelimits, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(factor(scenario, levels = unique(df_timelimits$scenario)) ~ Metric,
+             scales = "free",
+             labeller = labeller(Metric = Metric.labs),
+             # nrow = 2) +
+             ncol = 7) +
+  theme_classic() +
+  # theme(legend.position = c(.88, .2),
+  theme(#legend.position = c(.75, .1),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = HPcomb_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8))) +
+  labs(caption = "Red dotted lines show ideal performance.",
+       x = "Runtime (seconds)",
+       col = "Hyperparameter combination",
+       shape = "Hyperparameter combination")
+
+# ggsave("PilotPlot.png", plot_sc_met, width = 20, height = 40, units = "in")
+```
+
+```{r plot scenario by metric 8 pred}
+# make a plot
+plot_sc_met_8 <- df %>%
+  filter(p == 8) %>% 
+  group_by(n_prop, p, EF) %>% 
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = hp_combination)) +
+  geom_point(aes(col = hp_combination,
+                 shape = hp_combination)) +
+  xlim(0, max(df %>% filter(p == 8) %>% pull(time))) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(scenario ~ Metric,
+             scales = "free_y",
+             labeller = labeller(Metric = Metric.labs),
+             # nrow = 2) +
+             ncol = 7) +
+  theme_classic() +
+  # theme(legend.position = c(.88, .2),
+  theme(#legend.position = c(.75, .1),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = HPcomb_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8))) +
+  labs(caption = "Red dotted lines show ideal performance.",
+       x = "Runtime (seconds)",
+       col = "Hyperparameter combination",
+       shape = "Hyperparameter combination")
+
+# ggsave("PilotPlot_8.png", plot_sc_met_8, width = 20, height = 20, units = "in")
+```
+
+```{r plot scenario by metric 16 pred}
+# make a plot
+plot_sc_met_16 <- df %>%
+  filter(p == 16) %>% 
+  group_by(n_prop, p, EF) %>% 
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = hp_combination)) +
+  geom_point(aes(col = hp_combination,
+                 shape = hp_combination)) +
+  xlim(0, max(df %>% filter(p == 16) %>% pull(time))) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(scenario ~ Metric,
+             scales = "free_y",
+             labeller = labeller(Metric = Metric.labs),
+             # nrow = 2) +
+             ncol = 7) +
+  theme_classic() +
+  # theme(legend.position = c(.88, .2),
+  theme(#legend.position = c(.75, .1),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = HPcomb_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8))) +
+  labs(caption = "Red dotted lines show ideal performance.",
+       x = "Runtime (seconds)",
+       col = "Hyperparameter combination",
+       shape = "Hyperparameter combination")
+
+# ggsave("PilotPlot_16.png", plot_sc_met_16, width = 20, height = 20, units = "in")
+```
+
+```{r}
+# make a plot
+plot_ex_met <- df %>%
+  filter(n_prop == 1,
+         p      == 8,
+         EF     == 0.3) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = hp_combination)) +
+  geom_point(aes(col = hp_combination,
+                 shape = hp_combination)) +
+  # xlim(0, max(df$time)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(~ Metric,
+             scales = "free",
+             labeller = labeller(Metric = Metric.labs),
+             # nrow = 2) +
+             ncol = 2) +
+  theme_classic() +
+  # theme(legend.position = c(.88, .2),
+  theme(legend.position = c(.75, .1),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = HPcomb_pal) +
+  scale_shape_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = c(1, rep(16, 8))) +
+  labs(caption = "Red dotted lines show ideal performance.",
+       x = "Runtime (seconds)",
+       col = "Hyperparameter combination",
+       shape = "Hyperparameter combination")
+```
+
+
+# Summary tables
+
+```{r}
+mean_AUC <- df$AUC %>% mean()
+sd_AUC   <- df$AUC %>% sd()
+```
+
+```{r}
+summary_table_study1 <- df %>%
+  group_by(hp_combination) %>% 
+  summarise(AUC_mean = round(mean(AUC), 2),
+            AUC_sd = round(sd(AUC), 2),
+            Calslope_median = round(median(CalSlope), 2),
+            Calslope_IQR = round(IQR(CalSlope), 2),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
+            Runtime_mean = round(mean(time), 1),
+            Runtime_sd = round(sd(time), 1))
+summary_table_study1
+```
+
+
+```{r}
+# summary_table_study1 %>% 
+#   pivot_longer(c(AUC_mean, Calslope_median, `RMSD(slope)`)) %>% 
+#   mutate(spread = ifelse(name == "AUC_mean", AUC_sd,
+#                          ifelse(name == "Calslope_median", Calslope_IQR, NA)),
+#          ymin = value - spread,
+#          ymax = value + spread) %>% 
+#   ggplot(aes(x = Runtime_mean, y = value)) +
+#   geom_errorbar(aes(ymin = ymin,ymax = ymax)) +
+#   geom_point(aes(col = hp_combination)) +
+#   facet_wrap(~ name,
+#              nrow = 2,
+#              scales = "free") +
+#   theme_classic() +
+#   scale_color_manual(breaks = HP.labs,
+#                      labels = names(HP.labs),
+#                      values = HPcomb_pal) +
+#   theme(legend.position = c(0.75, 0.25))
+```
+
+
+```{r}
+summary_table_study1_perscenario <- df %>%
+  group_by(hp_combination, p, EF, n_prop) %>% 
+  summarise(AUC_mean = round(mean(AUC), 2),
+            AUC_sd = round(sd(AUC), 2),
+            Calslope_median = round(median(CalSlope), 2),
+            Calslope_IQR = round(IQR(CalSlope), 2),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
+            Runtime_mean = round(mean(time), 1),
+            Runtime_sd = round(sd(time), 1))
+```
+
+```{r}
+summaryplot <- df %>%
+  group_by(hp_combination, p, EF, n_prop) %>% 
+  summarise(AUC_mean = mean(AUC),
+            AUC_sd = sd(AUC),
+            Calslope_median = median(CalSlope),
+            Calslope_IQR = IQR(CalSlope),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = sqrt(mean((log(CalSlope))^2)),
+            Runtime_mean = mean(time),
+            Runtime_sd = sd(time)) %>% 
+  pivot_longer(c(AUC_mean, Calslope_median, `RMSD(slope)`)) %>% 
+  mutate(scenario = paste(p, EF, n_prop),
+         spread = ifelse(name == "AUC_mean", AUC_sd,
+                         ifelse(name == "Calslope_median", Calslope_IQR, NA)),
+         ymin = value - spread,
+         ymax = value + spread,
+         xmin = Runtime_mean - Runtime_sd,
+         xmax = Runtime_mean + Runtime_sd) %>% 
+  ggplot(aes(x = Runtime_mean, y = value)) +
+  # geom_errorbar(aes(ymin = ymin,ymax = ymax)) +
+  # geom_errorbar(aes(xmin = xmin,xmax = xmax)) +
+  geom_point(aes(col = hp_combination, shape = factor(p))) +
+  facet_wrap( ~ name,
+             nrow = 2,
+             scales = "free",
+             labeller = labeller(name = SummaryMetric.labs)) +
+  theme_classic() +
+  scale_color_manual(breaks = HP.labs,
+                     labels = names(HP.labs),
+                     values = HPcomb_pal) +
+  theme(legend.position = c(0.75, 0.25)) +
+  labs(shape = "Number of predictors",
+       col = "Hyperparameter combination")
+
+# ggsave(plot = summaryplot,
+#        file = "PilotPlot_summary.png", width = 10, height = 7, units = "in")
+```
+
+# Save the relevant plots and figures
+
+```{r}
+save(plot_ex_met, summary_table_study1, mean_AUC, sd_AUC, file = "Data/results.RData")
+```
+
+# Calibration plots
+
+```{r}
+n_datasets <- 4
+set.seed(123)
+preds <- paste0("./Data/preds/study1_run", rep(1075:1080, 2), "_", rep(c(8, 16), each = 6), ".rds") %>%
+  # sample(n_datasets) %>%
+  map(readRDS) %>%
+  bind_rows()
+
+# preds_test <- preds %>%
+#   mutate(my_pred = ifelse(prob <= 0.5, "neg", "pos"))
+# 
+# (preds_test$my_pred != preds_test$pred) %>% sum()
+# preds_test$prob[(preds_test$my_pred != preds_test$pred)][1] == 0.5
+
+((((preds$start_seed %>% unique()) - 16)/100) %% 6) %>% unique() %>% sort()
+```
+
+```{r}
+selected <- sample(c(rep(T, 1e4), rep(F, 1e5-1e4)), 1e5) %>% rep(9*n_datasets)
+preds_small <- preds[selected,] %>% 
+  mutate(obs = ifelse(obs == "neg", 0, 1)) #%>% filter(hp_combination %in% c("", "mtry + min.node.size"))
+
+plot <- ggplot() + 
+  geom_abline(slope = 1, intercept = 0, linewidth = 1) +
+  scale_color_brewer(palette = "Set2") +
+  xlab("Estimated Probability") +
+  ylab("Observed Proportion") +
+  theme_classic() +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  facet_wrap(hp_combination ~ scenario,
+             nrow = 9)
+
+for (dataset in unique(preds_small$start_seed)) {
+  print(dataset)
+  plot <- plot +
+    geom_line(data = preds_small %>% filter(start_seed == dataset) %>% mutate(scenario = ((start_seed-16)/100) %% 6), 
+              aes(x = prob, y = obs), 
+              stat = "smooth",
+              method = stats::loess, 
+              formula = y ~ x,
+              se = F, 
+              linewidth = 0.5, # 0.1
+              alpha = 1) # 0.3
+}
+
+# plot <- preds_small %>% 
+#   mutate(scenario = ((start_seed-16)/100) %% 6) %>% 
+#   ggplot(aes(x = prob, y = obs, group = factor(start_seed))) +
+#   geom_line(stat = "smooth",
+#             method = stats::loess, 
+#             formula = y ~ x,
+#             se = F, 
+#             linewidth = 0.5, # 0.1
+#             alpha = 1) + # 0.3
+#   geom_abline(slope = 1, intercept = 0, linewidth = 1) +
+#   xlab("Estimated Probability") +
+#   ylab("Observed Proportion") +
+#   theme_classic() +
+#   xlim(0, 1) +
+#   ylim(0, 1) +
+#   facet_wrap(hp_combination ~ scenario,
+#              nrow = 9)
+# 
+# plot
+
+start_plot <- Sys.time()
+ggsave("test_calplot_separated.png", plot, width = 20, height = 9*5, units = "in")
+end_plot <- Sys.time()
+# 25 seconds for plotting 2 sets of 10k
+# 40 seconds for plotting 3 sets of 10k
+# 55 seconds for plotting 4 sets of 10k
+```
+
+```{r}
+plot2 <- ggplot() + 
+  geom_abline(slope = 1, intercept = 0, linewidth = 1) +
+  scale_color_brewer(palette = "Set2") +
+  xlab("Estimated Probability") +
+  ylab("Observed Proportion") +
+  theme_classic() +
+  xlim(0, 1) +
+  ylim(0, 1) +
+  facet_wrap(~ hp_combination,
+             nrow = 3)
+
+for (dataset in unique(preds_small$start_seed)) {
+  print(dataset)
+  plot2 <- plot2 +
+    geom_line(data = preds_small %>% filter(start_seed == dataset), 
+              aes(x = prob, y = obs), 
+              stat = "smooth",
+              method = stats::loess, 
+              formula = y ~ x,
+              se = F, 
+              linewidth = 0.5, # 0.1
+              alpha = 1) # 0.3
+}
+
+start_plot2 <- Sys.time()
+ggsave("test_calplot.png", plot2, width = 15, height = 15, units = "in")
+end_plot2 <- Sys.time()
+```
+
+

@@ -1,6 +1,7 @@
 job_args <- commandArgs(trailingOnly=TRUE)
 print(job_args)
 
+start <- Sys.time()
 ##### Setup #####
 library(MASS)    # for mvrnorm
 library(dplyr)   # data wrangling
@@ -40,7 +41,8 @@ large_sample <- 1e5
 ##### Tuning setup #####
 
 # which metric are we optimising?
-metrics <- c("Deviance", "BrierScore", "logLoss", "AUC", "CalInt", "CalSlope", "Accuracy", "Kappa")
+metrics <- c("Deviance", "BrierScore", "LogLoss", "AUC", "CalInt", "CalSlope", "Accuracy", "Kappa")
+# names for calint and calslope
 
 # randomise the order in which metrics are run
 metrics_permutation <- sample(1:length(metrics), length(metrics))
@@ -146,16 +148,25 @@ for (metric in metrics) {
       allowParallel = FALSE
     )
   }
-  if (metric %in% c("logLoss", "Accuracy", "Kappa")) {
+  if (metric == "LogLoss") {
     ctrl <- trainControl(
       method = "cv",
       number = 5,
-      # summaryFunction = logloss_opt,
+      summaryFunction = logloss_opt,
+      classProbs = TRUE,
+      allowParallel = FALSE
+    )
+  }
+  if (metric %in% c("Accuracy", "Kappa")) {
+    ctrl <- trainControl(
+      method = "cv",
+      number = 5,
       classProbs = TRUE,
       allowParallel = FALSE
     )
   }
   
+  # set a seed here
   start_tune <- Sys.time()
   mod <- train(Y ~ .,
                data = dat,
@@ -176,19 +187,22 @@ for (metric in metrics) {
   perf <- performance(pred, val_dat$Y)
   
   out[row_out,"time"] <- tuning_time
-  out[row_out,11:17] <- perf               ### TODO: check cols
+  out[row_out,11:17] <- perf
   
   out_pred[(row_pred + 1):(row_pred + large_sample),"prob"] <- pred
   out_pred[(row_pred + 1):(row_pred + large_sample),"obs"]  <- as.character(val_dat$Y)
   row_pred <- row_pred + large_sample
 }
-
+end <- Sys.time()
 ##### Save #####
+time <- end-start
+timefile <- paste0("Study2/Data/study2_time", job_id, ".rds")
+save(time, file = timefile)
 
-filename <- paste0("Study2/Data/sim/study2_run", job_id, "_", p, ".rds")
+filename <- paste0("Study2/Data/sim/study2_run", job_id, ".rds")
 saveRDS(out, file = filename)
 
 if ((ceiling(job_id / 6) %% 10) == 0) {
-  filename_pred <- paste0("Study2/Data/preds/study2_preds_run", job_id, "_", p, ".rds")
+  filename_pred <- paste0("Study2/Data/preds/study2_preds_run", job_id, ".rds")
   saveRDS(out_pred, file = filename_pred)
 }
