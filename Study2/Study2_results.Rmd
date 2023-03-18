@@ -79,11 +79,7 @@ df_time <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
   
 time <- df_time %>% 
   group_by(start_seed, p, EF, n) %>% 
-  summarise(total_time = sum(time))
-
-not_computed <- scenarios %>% 
-  mutate(scenario = 1:12) %>% 
-  anti_join(time, by = c("n_pred" = "p", "event_fraction" = "EF", "n"))
+  summarise(total_time = sum(time)/60)
 
 df %>%
   group_by(start_seed, p, EF, n) %>%

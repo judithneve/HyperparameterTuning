@@ -119,7 +119,7 @@ Training and validation datasets were simulated under a logistic model with stro
 
 In Formula \ref{binomial}, $\beta_0$, $\beta$, $\gamma$ are respectively the intercept, main effect regression coefficient, and interaction effect regression coefficient of the data generating model, hereafter called "true effects".
 
-A validation dataset ($N = 100,000$) was generated for each training dataset in order to evaluate model performance.
+A validation dataset ($N = 100,000$ for study 1 and $N = 10,000$ for studies 2 and 3) was generated for each training dataset in order to evaluate model performance. The size of the validation dataset was reduced after study 1 due to storage constraints.
 
 ### True effect estimation
 
