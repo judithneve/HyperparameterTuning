@@ -17,45 +17,23 @@ df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
   paste0("./Data/sim/", .) %>% 
   map(readRDS) %>% 
   bind_rows()
-
-df <- df %>% 
-  mutate(hp_combination =
-           ifelse(hp_combination == "",
-                "None",
-                hp_combination) %>%
-           factor(),
-         time = time*60)
 ```
 
 # Primary data checks
 
 ```{r}
-df_info <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
-  paste0("./Data/sim/", .) %>% 
-  file.info()
-
-df_info <- paste0("./Data/sim/study1_onescenario_run", c(301:1500), "_8.rds") %>% 
-  file.info() # no rerun needed: from 03-14, 13:00
-df_info <- paste0("./Data/sim/study1_onescenario_run", c(52,94,130,166,202,304,454,478,562,568,586,706,856,868), "_16.rds") %>%
-  file.info()
-```
-
-
-```{r}
 unique(df$start_seed) %>% length()
-expected_seeds <- c((1:2400)*100 + 8, (1:900)*100 + 16)
+nrow(df)/8
+expected_seeds <- (1:1200)*100
 expected_seeds[!(expected_seeds %in% unique(df$start_seed))]
-(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()
-((expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()) %% 6
+(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100)
+((expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100)) %% 12
 
-unique(df$fold_seed) %>% length()
 summary(df)
 ```
 
 ```{r}
-failed <- c(6416, 7616, 8216, 10016, 19016, 22016, 22616, 23216, 23816, 24416, 25016, 25616, 26216, 26816, 27416, 28016, 28616, 29216, 29816,
-            30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
-            5216, 9416, 13016, 16616, 20216, 30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816) %>%
+failed <- c(1199) %>%
   unique()
 ```
 

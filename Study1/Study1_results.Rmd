@@ -43,9 +43,9 @@ df_info <- paste0("./Data/sim/study1_onescenario_run", c(52,94,130,166,202,304,4
 
 ```{r}
 unique(df$start_seed) %>% length()
-expected_seeds <- c((1:2400)*100 + 8, (1:900)*100 + 16)
-expected_seeds[!(expected_seeds %in% unique(df$start_seed))]
-(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()
+expected_seeds <- c((1:3000)*100 + 8, (1:1500)*100 + 16)
+expected_seeds[!(expected_seeds %in% unique(df$start_seed))] %>% paste(collapse = ", ")
+(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor() %>% paste(collapse = ",")
 ((expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor()) %% 6
 
 unique(df$fold_seed) %>% length()
