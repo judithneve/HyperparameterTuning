@@ -461,26 +461,26 @@ save(plot_ex_met, summary_table_study1, mean_AUC, sd_AUC, file = "Data/results.R
 # Calibration plots
 
 ```{r}
-n_datasets <- 4
-set.seed(123)
-preds <- paste0("./Data/preds/study1_run", rep(1075:1080, 2), "_", rep(c(8, 16), each = 6), ".rds") %>%
-  # sample(n_datasets) %>%
-  map(readRDS) %>%
-  bind_rows()
-
-# preds_test <- preds %>%
-#   mutate(my_pred = ifelse(prob <= 0.5, "neg", "pos"))
+# n_datasets <- 4
+# set.seed(123)
+# preds <- paste0("./Data/preds/study1_run", rep(1075:1080, 2), "_", rep(c(8, 16), each = 6), ".rds") %>%
+#   # sample(n_datasets) %>%
+#   map(readRDS) %>%
+#   bind_rows()
 # 
-# (preds_test$my_pred != preds_test$pred) %>% sum()
-# preds_test$prob[(preds_test$my_pred != preds_test$pred)][1] == 0.5
-
-((((preds$start_seed %>% unique()) - 16)/100) %% 6) %>% unique() %>% sort()
+# # preds_test <- preds %>%
+# #   mutate(my_pred = ifelse(prob <= 0.5, "neg", "pos"))
+# # 
+# # (preds_test$my_pred != preds_test$pred) %>% sum()
+# # preds_test$prob[(preds_test$my_pred != preds_test$pred)][1] == 0.5
+# 
+# ((((preds$start_seed %>% unique()) - 16)/100) %% 6) %>% unique() %>% sort()
 ```
 
 ```{r}
-selected <- sample(c(rep(T, 1e4), rep(F, 1e5-1e4)), 1e5) %>% rep(9*n_datasets)
-preds_small <- preds[selected,] %>% 
-  mutate(obs = ifelse(obs == "neg", 0, 1)) #%>% filter(hp_combination %in% c("", "mtry + min.node.size"))
+# selected <- sample(c(rep(T, 1e4), rep(F, 1e5-1e4)), 1e5) %>% rep(9*n_datasets)
+# preds_small <- preds[selected,] %>% 
+#   mutate(obs = ifelse(obs == "neg", 0, 1)) #%>% filter(hp_combination %in% c("", "mtry + min.node.size"))
 
 plot <- ggplot() + 
   geom_abline(slope = 1, intercept = 0, linewidth = 1) +
@@ -535,9 +535,21 @@ end_plot <- Sys.time()
 ```
 
 ```{r}
+seed_to_scenario <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
+  paste0("./Data/sim/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows()
+seed_to_scenario <- seed_to_scenario %>% 
+  select(start_seed, p, EF, n, n_prop) %>% 
+  unique() %>% 
+  mutate(scenario = as.numeric(factor(paste(p, EF, n_prop))))           # TODO: NICER SCENARIO NUMBERING
+predictions <- list.files(path = "./Data/preds/", pattern = ".rds") %>%
+  paste0("./Data/preds/", .)
+predictions <- predictions[1:(length(predictions)/2)]
+scenario_pal <- viridis::viridis(n = 12)
+
 plot2 <- ggplot() + 
   geom_abline(slope = 1, intercept = 0, linewidth = 1) +
-  scale_color_brewer(palette = "Set2") +
   xlab("Estimated Probability") +
   ylab("Observed Proportion") +
   theme_classic() +
@@ -546,21 +558,28 @@ plot2 <- ggplot() +
   facet_wrap(~ hp_combination,
              nrow = 3)
 
-for (dataset in unique(preds_small$start_seed)) {
-  print(dataset)
+for (pred in predictions) {
+  selected <- sample(c(rep(T, 1e4), rep(F, 1e5-1e4)), 1e5) %>% rep(9)
+  temp <- readRDS(pred) %>% 
+    mutate(obs = ifelse(obs == "neg", 0, 1),
+           selected = selected) %>% 
+    filter(selected)
+  col_temp <- seed_to_scenario %>% 
+    filter(start_seed == unique(temp$start_seed)) %>% 
+    pull(EF)
   plot2 <- plot2 +
-    geom_line(data = preds_small %>% filter(start_seed == dataset), 
-              aes(x = prob, y = obs), 
+    geom_line(data = temp,
+              aes(x = prob, y = obs),
+              col = scenario_pal[col_temp*10],
               stat = "smooth",
               method = stats::loess, 
               formula = y ~ x,
               se = F, 
-              linewidth = 0.5, # 0.1
-              alpha = 1) # 0.3
+              linewidth = 0.3)
 }
 
 start_plot2 <- Sys.time()
-ggsave("test_calplot.png", plot2, width = 15, height = 15, units = "in")
+ggsave("test_calplot_ef.png", plot2, width = 15, height = 15, units = "in")
 end_plot2 <- Sys.time()
 ```
 
