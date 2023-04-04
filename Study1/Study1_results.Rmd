@@ -546,7 +546,7 @@ seed_to_scenario <- seed_to_scenario %>%
 predictions <- list.files(path = "./Data/preds/", pattern = ".rds") %>%
   paste0("./Data/preds/", .)
 predictions <- predictions[1:(length(predictions)/2)]
-scenario_pal <- viridis::viridis(n = 12)
+scenario_pal <- viridis::cividis(n = 2)
 
 plot2 <- ggplot() + 
   geom_abline(slope = 1, intercept = 0, linewidth = 1) +
@@ -566,11 +566,11 @@ for (pred in predictions) {
     filter(selected)
   col_temp <- seed_to_scenario %>% 
     filter(start_seed == unique(temp$start_seed)) %>% 
-    pull(EF)
+    pull(p)
   plot2 <- plot2 +
     geom_line(data = temp,
               aes(x = prob, y = obs),
-              col = scenario_pal[col_temp*10],
+              col = scenario_pal[col_temp/8],
               stat = "smooth",
               method = stats::loess, 
               formula = y ~ x,
@@ -579,7 +579,7 @@ for (pred in predictions) {
 }
 
 start_plot2 <- Sys.time()
-ggsave("test_calplot_ef.png", plot2, width = 15, height = 15, units = "in")
+ggsave("test_calplot_p.png", plot2, width = 15, height = 15, units = "in")
 end_plot2 <- Sys.time()
 ```
 

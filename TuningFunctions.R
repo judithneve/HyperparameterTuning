@@ -127,3 +127,21 @@ tune_hyperparameters <- function(dataset, tunegrid, sf_candidates, replace_candi
   
   return(list(model = final_mod, fold_seed = fold_seed))
 }
+
+# tuneRanger: optimise deviance
+dev_mbo <- function(task, model, pred, feats, extra.args) {
+  obs <- factor_to_outcome(pred$data$truth)
+  preds <- pred$data$prob.pos
+  preds[preds == 0] <- 1e-16
+  preds[preds == 1] <- 1-1e-16
+  -2*sum(obs*log(preds) + (1-obs)*log(1-preds))
+}
+
+deviance_mbo <- makeMeasure(
+  "deviance_mbo",
+  minimize = TRUE,
+  fun = dev_mbo,
+  best = 0,
+  aggr = test.mean,
+  properties = c("classif", "req.prob")
+)

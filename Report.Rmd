@@ -83,7 +83,7 @@ Using datasets from the OpenML platform [@bischlOpenMLBenchmarkingSuites2021], P
 
 ### Study 2: Optimisation metric
 
-text here.
+This study aimed to identify which metric to optimise in the tuning procedure leads to the best predictive performance of a prediction model. We tuned the combination of hyperparameters considered to be the most optimal in Study 1.
 
 ### Study 3: Hyperparameter search algorithm
 
@@ -194,7 +194,35 @@ This yielded 8 hyperparameter combinations. Hyperparameters not included in a gi
 
 ### Study 2: Optimisation metric
 
-text here.
+We varied the metric to optimise when fitting a random forest using the R package `ranger` [@ranger] via the R package `caret` [@caret]. We used grid search (as is standard in this package) to tune the hyperparameters considered optimal in Study 1. 5-fold cross-validation was used as part of the tuning procedure. The considered candidate metrics are presented in Table \ref{tab:metrics} alongside their target values.
+
+```{=tex}
+\begin{table}[b]
+    \caption{Optimisation metric targets}
+    \centering
+    \begin{tabular}{cccc}
+        \hline
+        Metric & Target & Range of possible values & Definition \\
+        \hline
+        Deviance & 0 & [0, $\infty$] & summed difference between the predicted risk and the true outcome\\
+        Logarithmic loss & 0 & [0, 1] & mean difference between the predicted risk and the true outcome (penalising overconfident misclassifications)\\
+        AUC & 1 & [0.5, 1] & how well the classes are separated\\
+        Brier score & 0 & [0, 1] & difference between the predicted risk and the true outcome; can be seen as a composite measure of calibration and discrimination \cite{luijken_impact_2019}\\
+        Calibration intercept & 0 & [$-\infty$, $\infty$] & difference between the average predicted risk and the true event rate\\
+        Calibration slope & 1 & [0, $\infty$] & extent of over- or underestimation of risk\\
+        Classification accuracy & 1 & [0, 1] & proportion of correctly classified observations\\
+        Cohen's Kappa & 1 & [0, 1] & proportion of correctly classified observations (accounting for chance)\\
+        \hline
+    \end{tabular}
+    \begin{tablenotes}
+      \small
+      \item For calibration intercept and slope, the target value is not a boundary value. Calibration intercept was optimised by minimising the squared value. Calibration slope was optimised by minimising the squared natural log of the value.
+    \end{tablenotes}
+    \label{tab:metrics}
+\end{table}
+```
+
+That is, each dataset was tuned 8 times, leading to 54,000 tuning procedures.
 
 ### Study 3: Hyperparameter search algorithm
 
@@ -273,6 +301,65 @@ plot_ex_met
 More generally, large increases in runtime were observed when tuning 4 or more hyperparameters, with noticeably worse calibration performance and no observable change in other performance measures (Figure \@ref(fig:study1fig)).
 
 Secondary outcomes showed similar patterns (Figure \@ref(fig:study1fig)). Classification accuracy, Brier score, and logarithmic loss showed very little variation both within and between hyperparameter combinations. Calibration intercept and Cohen's Kappa showed variations within, but not between, hyperparameter combinations.
+
+## Study 2: Optimisation metric
+
+```{r}
+load("Study2/Data/results.RData")
+```
+
+The average and Monte Carlo error of primary outcomes for each optimisation metric are presented in Table \@ref(tab:results2). Effects were homogeneous across scenarios. We illustrate results specific to the scenario where $p = 8$, $EF = 0.3$, and $N = n$, in Figure \@ref(fig:study2fig). Results for other scenarios can be visualised at [THIS WILL BE A LINK TO A SHINY APP].
+
+```{r, results='asis'}
+tab <- summary_table_study2 %>% 
+  mutate(`Optimisation metric` = metric,
+         AUC = paste0(AUC_mean, " (", AUC_sd, ")"),
+         `Calibration slope` = paste0(Calslope_median, " (", Calslope_IQR, ")"),
+         `Runtime (seconds)` = paste0(
+           format(Runtime_mean, nsmall = 1),
+           " (",
+           Runtime_sd,
+           ")"
+           )) %>% 
+  dplyr::select(`Optimisation metric`, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- paste0(
+  paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+  paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+  '\\\\',
+  "\\multicolumn{1}{c}{}",
+  paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean(SD)"), "}", collapse = ""),
+  '\\\\'
+)
+
+tab %>%
+  xtable(caption = "Average performance of hyperparameter combinations (aggregated over all scenarios)",
+         label = "tab:results2",
+         align = c(rep("l", 2), rep("c", 3), "r")) %>% 
+  print.xtable(include.rownames = FALSE,
+               caption.placement = "top",
+               table.placement = "b",
+               comment = FALSE,
+               hline.after = c(-1, 0, 8),
+               #size="\\fontsize{8pt}{8pt}\\selectfont",
+               # scalebox = "0.8",
+               add.to.row = addtorow,
+               include.colnames = F)
+```
+
+These results show varying optimisation metrics had very limited effects on performance and computational time. Model calibration varied showed some variations between optimisation metrics (Table \@ref(tab:results2), Figure \@ref(fig:study2fig)). The best calibration performance was obtained by optimising calibration slope, which had a median calibration slope of `r summary_table_study2$'Calslope_median'[summary_table_study2$'metric' == "CalSlope"]` across all scenarios. This performance was among the most stable with an IQR of `r `r summary_table_study2$'Calslope_IQR'[summary_table_study2$'metric' == "CalSlope"]`. [calibration plots comments go here]. Tuning deviance performed similarly.
+
+```{r study2fig, fig.cap="Performance of each optimisation metric in the example scenario where p = 8, EF = 0.3, N = n", fig.height=8, fig.width=6}
+plot_ex_met
+```
+
+Secondary outcomes showed no difference in performance (Figure \@ref(fig:study2fig)). We further investigated whether optimising a given metric in the training dataset led to better performance on that metric in the validation dataset. This is presented in Figure \@ref(fig:study2extra). [COMMENTS ON THIS ONCE I HAVE A BETTER PLOT]
+
+```{r study2extra, fig.cap="Comparison of the performance of optimisation metrics and corresponding performance metrics in the example scenario where p = 8, EF = 0.3, N = n", fig.height=8, fig.width=6}
+plot_ex_same
+```
 
 # Discussion
 

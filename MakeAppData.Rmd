@@ -1,0 +1,188 @@
+---
+title: "Making the app data"
+author: "Judith Neve"
+date: '2023-03-22'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+df1 <- list.files(path = "./Study1/Data/sim/", pattern = ".rds") %>%
+  paste0("./Study1/Data/sim/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows() %>% 
+  mutate(hp_combination =
+           ifelse(hp_combination == "",
+                "None",
+                hp_combination) %>%
+           factor(),
+         time = time*60) %>%
+  group_by(n_prop, p, EF) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa")),
+         scenario = factor(paste0("p = ", p, ", EF = ", EF, ", N = ", n_prop, "n")),
+         variable = hp_combination)
+
+df2 <- list.files(path = "./Study2/Data/sim/", pattern = ".rds") %>%
+  paste0("./Study2/Data/sim/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows() %>% 
+  mutate(time = time*60) %>% 
+  group_by(n_prop, p, EF) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa")),
+         scenario = factor(paste0("p = ", p, ", EF = ", EF, ", N = ", n_prop, "n")),
+         variable = metric)
+
+df3 <- df2
+```
+
+```{r}
+df_scale1 <- tibble(
+  AUC = rep(c(0.5, 1), each = 9),
+  BrierScore = rep(c(0, 1), each = 9),
+  CalIntercept = rep(c(-1, 1), each = 9),
+  CalSlope = rep(c(0, 5), each = 9),
+  LogLoss = rep(c(0, 1), each = 9),
+  Accuracy = rep(c(0, 1), each = 9),
+  CohensKappa = rep(c(0, 1), each = 9),
+  time = 0,
+  variable = rep(unique(df1$hp_combination), 2)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+df_scale2 <- tibble(
+  AUC = rep(c(0.5, 1), each = 8),
+  BrierScore = rep(c(0, 1), each = 8),
+  CalIntercept = rep(c(-1, 1), each = 8),
+  CalSlope = rep(c(0, 5), each = 8),
+  LogLoss = rep(c(0, 1), each = 8),
+  Accuracy = rep(c(0, 1), each = 8),
+  CohensKappa = rep(c(0, 1), each = 8),
+  time = 0,
+  variable = rep(unique(df2$metric), 2)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+df_scale3 <- df_scale2
+```
+
+```{r}
+df_targets1 <- tibble(
+  AUC = 1,
+  BrierScore = 0,
+  CalIntercept = 0,
+  CalSlope = 1,
+  LogLoss = 0,
+  Accuracy = 1,
+  CohensKappa = 1,
+  time = 0,
+  hp_combination = unique(df1$hp_combination)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Target") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+df_targets2 <- tibble(
+  AUC = 1,
+  BrierScore = 0,
+  CalIntercept = 0,
+  CalSlope = 1,
+  LogLoss = 0,
+  Accuracy = 1,
+  CohensKappa = 1,
+  time = 0,
+  metric = unique(df2$metric)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Target") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+df_targets3 <- df_targets2
+```
+
+```{r}
+dat <- list(Study1 = df1,
+            Study2 = df2,
+            Study3 = df3)
+df_scale_setter <- list(Study1 = df_scale1,
+                        Study2 = df_scale2,
+                        Study3 = df_scale3)
+df_targets <- list(Study1 = df_targets1,
+                   Study2 = df_targets2,
+                   Study3 = df_targets3)
+```
+
+```{r}
+Metric.labs <- paste("Performance metric:", c("calibration slope", "calibration intercept", "Brier score", "logarithmic loss", "AUC", "classification accuracy", "Cohen's Kappa"))
+names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AUC", "Accuracy", "CohensKappa")
+```
+
+```{r}
+scale_color_mine <- function(study) {
+  if (study == "Study1") {
+    HP.labs <- c('mtry + min.node.size + replace', 'mtry + min.node.size', 'mtry + min.node.size + splitrule', 'mtry + min.node.size + sample.fraction + splitrule', 'mtry + min.node.size + sample.fraction', 'mtry + min.node.size + sample.fraction + replace', 'mtry + min.node.size + sample.fraction + replace + splitrule', 'None', 'mtry + min.node.size + replace + splitrule')
+    names(HP.labs) <- HP.labs
+    HP.labs <- c(HP.labs[which(HP.labs == "None")], sort(HP.labs[which(HP.labs != "None")]))[c(1,2,3,9,4,5,6,8,7)]
+    HPcomb_pal <- viridis::turbo(n = 9)
+    
+    return(scale_color_manual(breaks = HP.labs,
+                              labels = names(HP.labs),
+                              values = HPcomb_pal))
+  }
+  if (study == "Study2") {
+    opt.labs <- c("CalSlope", "CalInt", "BrierScore", "LogLoss", "AUC", "Accuracy", "Kappa", "Deviance")
+    names(opt.labs) <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa", "Deviance")
+    opt.labs <- opt.labs[c(8, 5, 4, 6, 7, 3, 2, 1)]
+    metric_pal <- viridis::inferno(n = 8)
+    
+    return(scale_color_manual(breaks = opt.labs,
+                              labels = names(opt.labs),
+                              values = metric_pal))
+    }
+}
+
+scale_shape_mine <- function(study) {
+  if (study == "Study1") {
+    HP.labs <- c('mtry + min.node.size + replace', 'mtry + min.node.size', 'mtry + min.node.size + splitrule', 'mtry + min.node.size + sample.fraction + splitrule', 'mtry + min.node.size + sample.fraction', 'mtry + min.node.size + sample.fraction + replace', 'mtry + min.node.size + sample.fraction + replace + splitrule', 'None', 'mtry + min.node.size + replace + splitrule')
+    names(HP.labs) <- HP.labs
+    HP.labs <- c(HP.labs[which(HP.labs == "None")], sort(HP.labs[which(HP.labs != "None")]))[c(1,2,3,9,4,5,6,8,7)]
+    
+    return(scale_shape_manual(breaks = HP.labs,
+                              labels = names(HP.labs),
+                              values = c(1, rep(16, 8))))
+  }
+  if (study == "Study2") {
+    opt.labs <- c("CalSlope", "CalInt", "BrierScore", "LogLoss", "AUC", "Accuracy", "Kappa", "Deviance")
+    names(opt.labs) <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa", "Deviance")
+    opt.labs <- opt.labs[c(8, 5, 4, 6, 7, 3, 2, 1)]
+    
+    return(scale_shape_manual(breaks = opt.labs,
+                              labels = names(opt.labs),
+                              values = rep(16, 8)))
+  }
+}
+```
+
+```{r}
+save(dat, df_scale_setter, df_targets, Metric.labs, scale_color_mine, scale_shape_mine, HP.labs, opt.labs,
+     file = "appdata.RData")
+```
+
