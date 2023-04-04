@@ -105,7 +105,7 @@ cal_int <- function(data, lev = NULL, model = NULL) {
 cal_slope <- function(data, lev = NULL, model = NULL) {
   obs  <- data$obs
   pred <- data$pos
-  print(length(obs))
+  
   if (sum(pred == 1) != 0){
     pred[pred == 1] <- 1 - ((1-max(pred[pred != 1]))/2)
   } 
@@ -118,13 +118,7 @@ cal_slope <- function(data, lev = NULL, model = NULL) {
                  family = "binomial")
   cal_sl <- coef(slope_model)[2]
   names(cal_sl) <- NULL
-  if (cal_sl <= 0) {
-    print(obs)
-    print(pred)
-    obs <<- obs
-    pred <<- pred
-    # cal_sl <- 1e-16
-  }
+  if (cal_sl <= 0) {cal_sl <- 1e-16}
   
   c(CalSlope = log(cal_sl)^2)
 }
