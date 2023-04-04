@@ -46,6 +46,8 @@ df %>%
 
 # Plots
 
+## Help dataframes
+
 ```{r scale setting}
 # set the min and max value for the y-axis of each facet
 df_scale_setter <- tibble(
@@ -110,6 +112,8 @@ metric_pal <- viridis::plasma(n = 8)
 # c("#b9dd56","#98544c","#57829b","#6d8640","#ffb58a","#979265","#67f3a7","#3fbb2b")
 same_pal <- viridis::cividis(2)
 ```
+
+## Report plots
 
 ```{r scenario by metric}
 # full plot: facet by scenario and metric
@@ -192,6 +196,7 @@ plot_ex_met <- df %>%
        col = "Optimisation metric",
        shape = "Optimisation metric")
 ```
+
 ```{r}
 # example plot: one scenario, facetted by performance metric - coloured by whether the performance and optimisation metrics are the same
 plot_ex_same <- df %>%
@@ -281,7 +286,7 @@ summary_table_study2_sc <- df %>%
             Runtime_sd = round(sd(time), 1))
 ```
 
-# Per scenario
+# Per scenario tile plots
 
 ```{r}
 # outcome plots
@@ -316,8 +321,6 @@ plot_auc_s2 <- df %>%
         panel.grid.minor.y=element_blank(), 
         panel.background=element_rect(fill="white"))
 ```
-
-
 
 # Save the relevant plots and figures
 
