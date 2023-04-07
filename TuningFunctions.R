@@ -132,12 +132,3 @@ dev_mbo <- function(task, model, pred, feats, extra.args) {
   preds[preds == 1] <- 1-1e-16
   -2*sum(obs*log(preds) + (1-obs)*log(1-preds))
 }
-
-deviance_mbo <- makeMeasure(
-  "deviance_mbo",
-  minimize = TRUE,
-  fun = dev_mbo,
-  best = 0,
-  aggr = test.mean,
-  properties = c("classif", "req.prob")
-)
