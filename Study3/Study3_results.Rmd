@@ -1,0 +1,292 @@
+---
+title: "Study 3: plot and table generation"
+author: "Judith Neve"
+date: '2023-02-26'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+# Read in data
+
+```{r}
+# read all the files into a dataframe
+df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
+  paste0("./Data/sim/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows() %>% 
+  mutate(time = time*60) # convert the runtime to seconds
+```
+
+# Primary data checks
+
+```{r}
+# check we have the correct number of runs: expect 600
+unique(df$start_seed) %>% length()
+# if runs are missing: check which runs we don't have
+expected_seeds <- (1:600)*100 + 50
+(expected_seeds[!(expected_seeds %in% unique(df$start_seed))] - 50)/100
+# 80 failed twice
+failed <- c(80,296,380,476,524,560,584) %>%
+  unique()
+```
+
+```{r}
+# check we have the correct number of datasets: expect 12*100*10
+unique(df$seed) %>% length()
+# if datasets are missing: check which ones we don't have
+expected_seeds <- rep((1:600)*100 + 50, each = 10) + rep(1:10, 600)
+expected_seeds[!(expected_seeds %in% unique(df$seed))]
+# nothing not already noted
+```
+
+# Plots
+
+## Help dataframes
+
+```{r scale setting}
+# set the min and max value for the y-axis of each facet
+df_scale_setter <- tibble(
+  AUC = rep(c(0.5, 1), each = 3),
+  BrierScore = rep(c(0, 1), each = 3),
+  CalIntercept = rep(c(-1, 1), each = 3),
+  CalSlope = rep(c(0, 2.5), each = 3),
+  LogLoss = rep(c(0, 1), each = 3),
+  Accuracy = rep(c(0, 1), each = 3),
+  CohensKappa = rep(c(0, 1), each = 3),
+  time = 0,
+  algorithm = rep(unique(df$algorithm), 2)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+# information about what the "ideal" measure is
+df_targets <- tibble(
+  AUC = 1,
+  BrierScore = 0,
+  CalIntercept = 0,
+  CalSlope = 1,
+  LogLoss = 0,
+  Accuracy = 1,
+  CohensKappa = 1,
+  time = 0,
+  algorithm = unique(df$algorithm)
+) %>%
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Target") %>%
+  mutate(Metric = factor(Metric, levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")))
+
+# set the limit for the x-axis: longest time for 8 predictors & longest time for 16 predictors (depending on the scenario)
+df_timelimits <- expand.grid(
+  algorithm = unique(df$algorithm),
+  p      = c(8, 16),
+  EF     = c(0.1, 0.3, 0.5),
+  n_prop = c(0.5, 1),
+  Metric = factor(c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa"), levels = c("AUC", "CalSlope", "BrierScore", "CalIntercept", "LogLoss", "Accuracy", "CohensKappa")),
+  Performance          = 0
+) %>% 
+  mutate(time = ifelse(p == 8,
+                       max(df %>% filter(p == 8) %>% pull(time)),
+                       max(df %>% filter(p == 16) %>% pull(time))),
+         scenario = paste(n_prop, p, EF)) %>% 
+  arrange(p)
+
+# labeller vectors
+## performance metric
+Metric.labs <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa")
+names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AUC", "Accuracy", "CohensKappa")
+## search algorithm
+alg.labs <- c("grid", "random", "mbo")
+names(alg.labs) <- c("Grid search", "Random search", "Model-based optimisation")
+
+# define the colour palettes
+alg_pal <- viridis::viridis(n = 3)
+```
+
+## Report plots
+
+```{r scenario by metric}
+# full plot: facet by scenario and algorithm
+plot_sc_met <- df %>%
+  group_by(n_prop, p, EF) %>% 
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = algorithm)) +
+  geom_point(aes(col = algorithm,
+                 shape = algorithm)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  # geom_point(data = df_timelimits, alpha = 0) +
+  xlim(0, max(df$time)) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(factor(scenario, levels = unique(df_timelimits$scenario)) ~ Metric,
+             scales = "free",
+             labeller = labeller(Metric = Metric.labs),
+             ncol = 7) +
+  theme_classic() +
+  theme(legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(labels = names(alg.labs),
+                     breaks = alg.labs,
+                     values = alg_pal) +
+  scale_shape_manual(labels = names(alg.labs),
+                     breaks = alg.labs,
+                     values = rep(16, 3)) +
+  labs(x = "Runtime (seconds)",
+       col = "Optimisation metric",
+       shape = "Optimisation metric")
+
+# ggsave("PilotPlot.png", plot_sc_met, width = 20, height = 40, units = "in")
+```
+
+```{r}
+# example plot: two scenarios, facetted by performance metric
+plot_ex_met <- df %>%
+  filter(n_prop == 1,
+         p      == 8,
+         EF     == 0.3) %>% 
+  pivot_longer(AUC:CohensKappa,
+               names_to = "Metric",
+               values_to = "Performance") %>%
+  mutate(Metric = factor(Metric,
+                         levels = c("AUC", "CalSlope", "CalIntercept", "BrierScore", "LogLoss", "Accuracy", "CohensKappa"))) %>%
+  ggplot(aes(x = time,
+             y = Performance,
+             group = algorithm)) +
+  geom_point(aes(col = algorithm)) +
+  geom_point(data = df_scale_setter, alpha = 0) +
+  geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
+  facet_wrap(~ Metric,
+             scales = "free",
+             labeller = labeller(Metric = Metric.labs),
+             ncol = 2) +
+  theme_classic() +
+  theme(legend.position = c(.75, .1),
+        legend.text = element_text(size = 8),
+        legend.key.size = unit(0.4, 'cm'),
+        legend.background = element_rect(),
+        panel.spacing = unit(1.2, "lines"),
+        plot.caption = element_text(hjust = 0)) +
+  scale_color_manual(breaks = alg.labs,
+                     labels = names(alg.labs),
+                     values = alg_pal) +
+  scale_shape_manual(breaks = alg.labs,
+                     labels = names(alg.labs),
+                     values = rep(16, 8)) +
+  labs(x = "Runtime (seconds)",
+       col = "Hyperparameter search algorithm",
+       shape = "Hyperparameter search algorithm")
+```
+
+```{r}
+per_scenario_runtime <- df %>% 
+  mutate(scenario = factor(paste0("p = ", p, ", EF = ", EF, ", N = ", n_prop, "n")),
+         algorithm = factor(recode(algorithm,
+                                   mbo = "Model-based optimisation",
+                                   grid = "Grid search",
+                                   random = "Random search"),
+                            levels = c("Model-based optimisation", "Random search", "Grid search"))) %>%
+  ggplot(aes(x = algorithm, y = time)) +
+  geom_boxplot() +
+  coord_flip() +
+  facet_wrap(~ scenario, scales = "free_x",
+             ncol = 2) +
+  theme_classic() +
+  labs(x = "Hyperparameter search algorithm",
+       y = "Runtime (seconds)")
+```
+
+
+# Summary statistics
+
+```{r}
+# overall AUC
+mean_AUC <- df$AUC %>% mean()
+sd_AUC   <- df$AUC %>% sd()
+```
+
+```{r}
+# primary outcome table
+summary_table_study3 <- df %>%
+  group_by(algorithm) %>% 
+  summarise(AUC_mean = round(mean(AUC), 2),
+            AUC_sd = round(sd(AUC), 2),
+            Calslope_median = round(median(CalSlope), 2),
+            Calslope_IQR = round(IQR(CalSlope), 2),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
+            Runtime_mean = round(mean(time), 1),
+            Runtime_sd = round(sd(time), 1)) %>% 
+  arrange(`RMSD(slope)`)
+```
+
+```{r}
+# primary outcome table - per scenario
+summary_table_study3_sc <- df %>%
+  group_by(algorithm, p, EF, n_prop) %>% 
+  summarise(n = n(),
+            AUC_mean = round(mean(AUC), 2),
+            AUC_sd = round(sd(AUC), 2),
+            Calslope_median = round(median(CalSlope), 2),
+            Calslope_IQR = round(IQR(CalSlope), 2),
+            #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
+            `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
+            Runtime_mean = round(mean(time), 1),
+            Runtime_sd = round(sd(time), 1))
+```
+
+# Per scenario tile plots
+
+```{r}
+# outcome plots
+plot_calslope_s3 <- df %>%
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  group_by(scenario, algorithm) %>% 
+  summarise(calslope = median(CalSlope)) %>% 
+  ggplot(aes(x = scenario, y = algorithm)) +
+  geom_tile(aes(fill = calslope)) +  ##
+  geom_text(aes(label = round(calslope, 2))) + ##
+  scale_fill_gradient2(low = "white", high = "white", mid = "green", midpoint = 0, trans = "log")  + ## 
+  xlab("Scenario") + 
+  ylab("Hyperparameter search algorithm") + 
+  theme(panel.grid.major.x=element_blank(),
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(), 
+        panel.background=element_rect(fill="white"))
+plot_auc_s3 <- df %>%
+  mutate(scenario = paste(n_prop, p, EF)) %>% 
+  group_by(scenario, algorithm) %>% 
+  summarise(AUC = mean(AUC)) %>% 
+  ggplot(aes(x = scenario, y = algorithm)) +
+  geom_tile(aes(fill = AUC)) +
+  geom_text(aes(label = round(AUC, 2))) +
+  scale_fill_gradient2(low = "white", high = "green")  +
+  xlab("Scenario") + 
+  ylab("Hyperparameter search algorithm") + 
+  theme(panel.grid.major.x=element_blank(),
+        panel.grid.minor.x=element_blank(), 
+        panel.grid.major.y=element_blank(), 
+        panel.grid.minor.y=element_blank(), 
+        panel.background=element_rect(fill="white"))
+```
+
+# Save the relevant plots and figures
+
+```{r}
+save(plot_ex_met, summary_table_study3, mean_AUC, sd_AUC, summary_table_study3_sc, plot_calslope_s3, plot_auc_s3, per_scenario_runtime, file = "Data/results.RData")
+```
