@@ -1,5 +1,7 @@
 # Evaluating tuning strategies for random forest hyperparameters with regards to prediction performance of clinical prediction models and computational time
 
+All included information is accurate; some information is missing regarding recently uploaded files. Information will be updated before May 15th, 2023.
+
 ## What to run?
 
 ### To reproduce the research report (preliminary results)
@@ -8,7 +10,7 @@
 
 ### To reproduce the study
 
-This is not possible as of yet.
+This is not possible as of yet: some required files have not yet been uploaded. This will be done before May 15th, 2023.
 
 ## Folder structure
 
