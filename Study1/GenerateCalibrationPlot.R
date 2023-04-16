@@ -1,16 +1,37 @@
 library(dplyr)
+library(purrr)
 library(ggplot2)
 
-dat <- readRDS("Study3/Data/coords/study3_ef5.rds")
+dat <- list.files(path = "./Study1/Data/coords/", pattern = ".rds") %>%
+  paste0("./Study1/Data/coords/", .) %>% 
+  map(readRDS) %>% 
+  bind_rows() %>% 
+  mutate(hp_combination = ifelse(hp_combination == "", "None", hp_combination))
 
-alg.labs <- c("grid", "random", "mbo")
-names(alg.labs) <- c("Grid search", "Random search", "Model-based optimisation")
-alg.labs <- alg.labs[c(2, 1, 3)]
+HP.labs <- c('None',
+             'mtry + min.node.size',
+             'mtry + min.node.size + replace',
+             'mtry + min.node.size + splitrule',
+             'mtry + min.node.size + replace + splitrule',
+             'mtry + min.node.size + sample.fraction',
+             'mtry + min.node.size + sample.fraction + replace',
+             'mtry + min.node.size + sample.fraction + splitrule',
+             'mtry + min.node.size + sample.fraction + replace + splitrule')
+HP.labs.lines <- c('None',
+                   'mtry + min.node.size',
+                   'mtry + min.node.size + replace',
+                   'mtry + min.node.size + splitrule',
+                   'mtry + min.node.size\n+ replace + splitrule',
+                   'mtry + min.node.size\n+ sample.fraction',
+                   'mtry + min.node.size\n+ sample.fraction + replace',
+                   'mtry + min.node.size\n+ sample.fraction + splitrule',
+                   'mtry + min.node.size + replace\n+ sample.fraction + splitrule')
+names(HP.labs.lines) <- HP.labs
 
 plot <- dat %>% 
-  mutate(algorithm = factor(algorithm, levels = alg.labs, labels = names(alg.labs))) %>% 
+  mutate(hp_combination = factor(hp_combination, levels = names(HP.labs.lines), labels = HP.labs.lines)) %>% 
   ggplot() + 
-  geom_line(aes(x = x, y = y, group = seed),
+  geom_line(aes(x = x, y = y, group = start_seed),
             stat = "smooth",
             method = stats::loess, 
             formula = y ~ x,
@@ -24,13 +45,13 @@ plot <- dat %>%
   theme_classic() +
   xlim(0, 1) +
   ylim(0, 1) +
-  facet_wrap(~ algorithm,
-             nrow = 2) +
+  facet_wrap(~ hp_combination,
+             nrow = 3) +
   theme(
     axis.text = element_text(size = 10),
     axis.title = element_text(size = 11),
     strip.text = element_text(size = 11)
   )
 
-plot_name <- paste0("Study3/Output/plot_EF_", 5, ".pdf")
+plot_name <- paste0("Study1/Output/plot_EF_", 5, ".pdf")
 ggsave(plot_name, plot, width = 8.5, height = 8.5, units = "in")
