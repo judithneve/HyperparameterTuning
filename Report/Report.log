@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.4.4)  7 APR 2023 16:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2023.4.4)  14 APR 2023 15:48
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1005,59 +1005,70 @@ Overfull \vbox (6.46347pt too high) has occurred while \output is active []
 \openout3 = `Report.pag'.
 
 ] [2]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 263.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 283.
 (c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 ) [3] [4] [5] [6]
-<Report_files/figure-latex/unnamed-chunk-6-1.pdf, id=156, 469.755pt x 578.16pt>
+<Report_files/figure-latex/unnamed-chunk-6-1.pdf, id=160, 433.62pt x 578.16pt>
 File: Report_files/figure-latex/unnamed-chunk-6-1.pdf Graphic file (type pdf)
 <use Report_files/figure-latex/unnamed-chunk-6-1.pdf>
-Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 579.
-(pdftex.def)             Requested size: 507.50787pt x 624.62405pt.
-<./../Study1/Data/plot_EF_5.pdf, id=157, 614.295pt x 614.295pt>
+Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-6-1.pdf  used on input line 639.
+(pdftex.def)             Requested size: 433.61894pt x 578.15858pt.
+<./../Study1/Data/plot_EF_5.pdf, id=161, 614.295pt x 614.295pt>
 File: ./../Study1/Data/plot_EF_5.pdf Graphic file (type pdf)
 <use ./../Study1/Data/plot_EF_5.pdf>
-Package pdftex.def Info: ./../Study1/Data/plot_EF_5.pdf  used on input line 583.
+Package pdftex.def Info: ./../Study1/Data/plot_EF_5.pdf  used on input line 646.
 (pdftex.def)             Requested size: 507.50787pt x 507.512pt.
-<Report_files/figure-latex/unnamed-chunk-10-1.pdf, id=165, 433.62pt x 578.16pt>
+<Report_files/figure-latex/unnamed-chunk-10-1.pdf, id=169, 433.62pt x 578.16pt>
 File: Report_files/figure-latex/unnamed-chunk-10-1.pdf Graphic file (type pdf)
 <use Report_files/figure-latex/unnamed-chunk-10-1.pdf>
-Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-10-1.pdf  used on input line 640.
+Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-10-1.pdf  used on input line 706.
 (pdftex.def)             Requested size: 433.61894pt x 578.15858pt.
-<./../Study2/Output/plot_EF_5.pdf, id=166, 614.295pt x 614.295pt>
+[7]
+<./../Study2/Output/plot_EF_5.pdf, id=187, 409.53pt x 409.53pt>
 File: ./../Study2/Output/plot_EF_5.pdf Graphic file (type pdf)
 <use ./../Study2/Output/plot_EF_5.pdf>
-Package pdftex.def Info: ./../Study2/Output/plot_EF_5.pdf  used on input line 646.
-(pdftex.def)             Requested size: 507.50787pt x 507.512pt.
-<Report_files/figure-latex/unnamed-chunk-12-1.pdf, id=169, 433.62pt x 578.16pt>
+Package pdftex.def Info: ./../Study2/Output/plot_EF_5.pdf  used on input line 713.
+(pdftex.def)             Requested size: 507.50787pt x 507.54324pt.
+<Report_files/figure-latex/unnamed-chunk-12-1.pdf, id=190, 433.62pt x 578.16pt>
 File: Report_files/figure-latex/unnamed-chunk-12-1.pdf Graphic file (type pdf)
 <use Report_files/figure-latex/unnamed-chunk-12-1.pdf>
-Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 658.
+Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-12-1.pdf  used on input line 725.
 (pdftex.def)             Requested size: 433.61894pt x 578.15858pt.
-[7] [8 <./Report_files/figure-latex/unnamed-chunk-6-1.pdf>] (./Report.bbl [9 <./../Study1/Data/plot_EF_5.pdf>]
+<Report_files/figure-latex/unnamed-chunk-15-1.pdf, id=195, 433.62pt x 578.16pt>
+File: Report_files/figure-latex/unnamed-chunk-15-1.pdf Graphic file (type pdf)
+<use Report_files/figure-latex/unnamed-chunk-15-1.pdf>
+Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-15-1.pdf  used on input line 771.
+(pdftex.def)             Requested size: 433.61894pt x 578.15858pt.
+<Report_files/figure-latex/unnamed-chunk-16-1.pdf, id=196, 433.62pt x 578.16pt>
+File: Report_files/figure-latex/unnamed-chunk-16-1.pdf Graphic file (type pdf)
+<use Report_files/figure-latex/unnamed-chunk-16-1.pdf>
+Package pdftex.def Info: Report_files/figure-latex/unnamed-chunk-16-1.pdf  used on input line 788.
+(pdftex.def)             Requested size: 433.61894pt x 578.15858pt.
+<./../Study3/Output/plot_EF_5.pdf, id=197, 614.295pt x 614.295pt>
+File: ./../Study3/Output/plot_EF_5.pdf Graphic file (type pdf)
+<use ./../Study3/Output/plot_EF_5.pdf>
+Package pdftex.def Info: ./../Study3/Output/plot_EF_5.pdf  used on input line 795.
+(pdftex.def)             Requested size: 507.50787pt x 507.512pt.
+[8] [9] [10] (./Report.bbl
 Underfull \hbox (badness 6110) in paragraph at lines 62--64
 []\T1/stix/m/n/10.03749 Bischl B, Casal-ic-chio G, Feurer M, et al. OpenML Bench-mark-ing Suites. 2021(arXiv:1708.03731).  []doi:
  []
 
-
-Overfull \hbox (443.45367pt too wide) in paragraph at lines 82--84
-[]\T1/stix/m/n/10.03749 Van Cal-ster B. ben-van-cal-ster/-clas-simb_calibration. 2022.  https://github.com/benvancalster/classimb_calibration/blob/ad521b46b32ec42689a05bc336fb3270a5c1f28e/simulation%20study/Simulation/performance_measures_wo_eci.R. 
- []
-
-) [10] [11] [12 <./Report_files/figure-latex/unnamed-chunk-10-1.pdf>] [13 <./../Study2/Output/plot_EF_5.pdf>] [14 <./Report_files/figure-latex/unnamed-chunk-12-1.pdf>] (./Report.aux) ) 
+[11]) [12] [13 <./Report_files/figure-latex/unnamed-chunk-6-1.pdf>] [14 <./../Study1/Data/plot_EF_5.pdf>] [15 <./Report_files/figure-latex/unnamed-chunk-10-1.pdf>] [16 <./../Study2/Output/plot_EF_5.pdf>] [17 <./Report_files/figure-latex/unnamed-chunk-12-1.pdf>] [18 <./Report_files/figure-latex/unnamed-chunk-15-1.pdf>] [19 <./Report_files/figure-latex/unnamed-chunk-16-1.pdf>] [20 <./../Study3/Output/plot_EF_5.pdf>] (./Report.aux) ) 
 Here is how much of TeX's memory you used:
- 20158 strings out of 477977
- 313942 string characters out of 5837492
- 1877660 words of memory out of 5000000
- 39932 multiletter control sequences out of 15000+600000
+ 20225 strings out of 477977
+ 315561 string characters out of 5837492
+ 1878660 words of memory out of 5000000
+ 39972 multiletter control sequences out of 15000+600000
  616393 words of font info for 164 fonts, out of 8000000 for 9000
  40 hyphenation exceptions out of 8191
- 90i,11n,90p,1777b,553s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 90i,11n,90p,1777b,615s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/STIXGeneral-Bold.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/STIXGeneral-Italic.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/STIXGeneral-Regular.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/stix-mathex.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/stix-mathit-bold.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/stix-mathit.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/stix-mathrm-bold.pfb><c:/Users/ditdi/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/stix/stix-mathrm.pfb>
-Output written on Report.pdf (14 pages, 5916338 bytes).
+Output written on Report.pdf (20 pages, 6802821 bytes).
 PDF statistics:
- 425 PDF objects out of 1000 (max. 8388607)
- 350 compressed objects within 4 object streams
- 91 named destinations out of 1000 (max. 500000)
- 202 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 538 PDF objects out of 1000 (max. 8388607)
+ 450 compressed objects within 5 object streams
+ 115 named destinations out of 1000 (max. 500000)
+ 273 words of extra memory for PDF output out of 10000 (max. 10000000)
 

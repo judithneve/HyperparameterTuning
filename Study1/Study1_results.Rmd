@@ -51,7 +51,8 @@ expected_seeds[!(expected_seeds %in% unique(df$start_seed))] %>% paste(collapse 
 
 failed <- c(6416, 7616, 8216, 10016, 19016, 22016, 22616, 23216, 23816, 24416, 25016, 25616, 26216, 26816, 27416, 28016, 28616, 29216, 29816,
             30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
-            5216, 9416, 13016, 16616, 20216, 30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816) %>%
+            5216, 9416, 13016, 16616, 20216, 30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
+            93416, 98216, 98816, 103016, 106016, 106616, 107216, 107816, 115016, 119216, 119816, 120416, 133016, 133616, 145616, 148016, 148616, 149216, 149816, 159416, 160616, 165416, 175016, 175616, 176816, 177416, 182216, 184616, 185216, 188216, 188816, 189416, 190016, 191216, 191816, 193016, 193616, 194216, 194816, 195416, 197216, 202616, 209216, 209816, 210416, 214616, 215816, 219416, 220016, 222416, 223016, 223616, 224816, 227216, 229616, 230216, 232016, 232616, 237416, 238016, 238616, 241016, 241616, 242216, 242816, 244616, 245216, 245816, 246416, 247016, 248216, 249416, 251216, 252416, 253016, 253616, 256616, 259016, 260816, 263816, 264416, 271016, 271616, 274616, 275816, 276416, 277616, 278816, 280616, 283016, 283616, 284816, 286616, 287816, 288416, 289616, 290816, 291416, 293216, 293816, 294416, 295616, 296216, 298616, 299216) %>%
   unique()
 ```
 
@@ -128,7 +129,8 @@ names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AU
 ## hyperparameter combinations
 HP.labs <- unique(df$hp_combination)
 names(HP.labs) <- HP.labs
-HP.labs <- c(HP.labs[which(HP.labs == "None")], sort(HP.labs[which(HP.labs != "None")]))[c(1,2,3,9,4,5,6,8,7)]
+HP.labs <- c(HP.labs[which(HP.labs == "None")], sort(HP.labs[which(HP.labs != "None")]))[c(1,2,3,9,5,4,6,8,7)]
+names(HP.labs)[9] <- "mtry + min.node.size\n+ sample.fraction + replace + splitrule"
 
 # define the colour palette
 HPcomb_pal <- viridis::turbo(n = 9)
@@ -170,8 +172,7 @@ plot_sc_met <- df %>%
   scale_shape_manual(breaks = HP.labs,
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8))) +
-  labs(caption = "Red dotted lines show ideal performance.",
-       x = "Runtime (seconds)",
+  labs(x = "Runtime (seconds)",
        col = "Hyperparameter combination",
        shape = "Hyperparameter combination")
 ```
@@ -199,7 +200,7 @@ plot_ex_met <- df %>%
              labeller = labeller(Metric = Metric.labs),
              ncol = 2) +
   theme_classic() +
-  theme(legend.position = c(.75, .1),
+  theme(#legend.position = c(.75, .1),
         legend.text = element_text(size = 8),
         legend.key.size = unit(0.4, 'cm'),
         legend.background = element_rect(),
@@ -211,8 +212,7 @@ plot_ex_met <- df %>%
   scale_shape_manual(breaks = HP.labs,
                      labels = names(HP.labs),
                      values = c(1, rep(16, 8))) +
-  labs(caption = "Red dotted lines show ideal performance.",
-       x = "Runtime (seconds)",
+  labs(x = "Runtime (seconds)",
        col = "Hyperparameter combination",
        shape = "Hyperparameter combination")
 ```
@@ -294,3 +294,46 @@ plot_auc_s1 <- df %>%
 ```{r}
 save(plot_ex_met, summary_table_study1, mean_AUC, sd_AUC, summary_table_study1_sc, plot_calslope_s1, plot_auc_s1, file = "Data/results.RData")
 ```
+
+
+```{r}
+df_casestudy <- df %>% 
+  filter(p == 16,
+         n_prop == 1,
+         EF == 0.5,
+         hp_combination == "mtry + min.node.size + sample.fraction + replace + splitrule") %>% 
+  mutate(miscal = CalSlope > 2)
+
+set.seed(100)
+rerun <- ((df_casestudy %>% pull(start_seed) %>% sample(250)) - 16)/100
+rerun[1:10] %>% paste(collapse = ",")
+
+badcal <- ((df_casestudy %>% filter(miscal) %>% pull(start_seed)) - 16)/100
+okcal  <- ((df_casestudy %>% filter(!miscal) %>% pull(start_seed)) - 16)/100
+
+paste(c(badcal, okcal), collapse = ",")
+```
+
+```{r}
+df_calsep <- list.files(path = "./Data/calsep/", pattern = ".rds") %>%
+  paste0("./Data/calsep/", .) %>% 
+  # file.info()
+  map(readRDS) %>% 
+  # mutate(splitrule = as.character(splitrule)) %>% 
+  bind_rows()
+```
+
+```{r}
+df <- df %>% 
+  filter(start_seed %in% unique(df_calsep$start_seed))
+```
+
+```{r}
+df_calsep %>% 
+  filter(hp_combination %in% c("mtry + min.node.size + sample.fraction + replace + splitrule", "mtry + min.node.size + sample.fraction + splitrule", "mtry + min.node.size + splitrule", "mtry + min.node.size + replace + splitrule")) %>% 
+  ggplot(aes(x = time, y = CalSlope, col = factor(splitrule))) +
+  geom_point() +
+  theme_classic() +
+  facet_wrap(~ hp_combination, scales = "free")
+```
+

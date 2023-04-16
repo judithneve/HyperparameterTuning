@@ -1,4 +1,89 @@
+@Book{mass,
+    title = {Modern Applied Statistics with S},
+    author = {W. N. Venables and B. D. Ripley},
+    publisher = {Springer},
+    edition = {Fourth},
+    address = {New York},
+    year = {2002},
+    note = {ISBN 0-387-95457-0},
+    url = {https://www.stats.ox.ac.uk/pub/MASS4/},
+  }
+  
+@article{dplyr,
+title = {dplyr: A Grammar of Data Manipulation},
+author = {Hadley Wickham and Romain François and Lionel Henry and Kirill Müller and Davis Vaughan},
+year = {2023},
+note = {R package version 1.1.1},
+url = {https://CRAN.R-project.org/package=dplyr},
+}
 
+@Article{ranger,
+    title = {{ranger}: A Fast Implementation of Random Forests for High Dimensional Data in {C++} and {R}},
+    author = {Marvin N. Wright and Andreas Ziegler},
+    journal = {Journal of Statistical Software},
+    year = {2017},
+    volume = {77},
+    number = {1},
+    pages = {1--17},
+    doi = {10.18637/jss.v077.i01},
+  }
+  
+  @Article{proc,
+    title = {pROC: an open-source package for R and S+ to analyze and compare ROC curves},
+    author = {Xavier Robin and Natacha Turck and Alexandre Hainard and Natalia Tiberti and Frédérique Lisacek and Jean-Charles Sanchez and Markus Müller},
+    year = {2011},
+    journal = {BMC Bioinformatics},
+    volume = {12},
+    pages = {77},
+  }
+  
+@article{psych,
+    title = {psych: Procedures for Psychological, Psychometric, and Personality Research},
+    author = {{William Revelle}},
+    organization = {Northwestern University},
+    address = {Evanston, Illinois},
+    year = {2023},
+    note = {R package version 2.3.3},
+    url = {https://CRAN.R-project.org/package=psych},
+  }
+  
+@Article{tidyverse,
+    title = {Welcome to the {tidyverse}},
+    author = {Hadley Wickham and Mara Averick and Jennifer Bryan and Winston Chang and Lucy D'Agostino McGowan and Romain François and Garrett Grolemund and Alex Hayes and Lionel Henry and Jim Hester and Max Kuhn and Thomas Lin Pedersen and Evan Miller and Stephan Milton Bache and Kirill Müller and Jeroen Ooms and David Robinson and Dana Paige Seidel and Vitalie Spinu and Kohske Takahashi and Davis Vaughan and Claus Wilke and Kara Woo and Hiroaki Yutani},
+    year = {2019},
+    journal = {Journal of Open Source Software},
+    volume = {4},
+    number = {43},
+    pages = {1686},
+    doi = {10.21105/joss.01686},
+  }
+  
+@article{viridis,
+    title = {{viridis} - Colorblind-Friendly Color Maps for R},
+    author = {{Garnier} and {Simon} and {Ross} and {Noam} and {Rudis} and {Robert} and {Camargo} and Antônio Pedro and {Sciaini} and {Marco} and {Scherer} and {Cédric}},
+    year = {2021},
+    note = {R package version 0.6.2},
+    url = {https://sjmgarnier.github.io/viridis/},
+    doi = {10.5281/zenodo.4679424},
+    doi = {10.5281/zenodo.4679424},
+  }
+  
+@article{xtable,
+    title = {xtable: Export Tables to LaTeX or HTML},
+    author = {David B. Dahl and David Scott and Charles Roosen and Arni Magnusson and Jonathan Swinton},
+    year = {2019},
+    note = {R package version 1.8-4},
+    url = {https://CRAN.R-project.org/package=xtable},
+  }
+  
+@article{rticle,
+    title = {rticles: Article Formats for R Markdown},
+    author = {JJ Allaire and Yihui Xie and Christophe Dervieux and {R Foundation} and Hadley Wickham and {Journal of Statistical Software} and Ramnath  Vaidyanathan and {Association for Computing Machinery} and Carl Boettiger and {Elsevier} and Karl Broman and Kirill Mueller and Bastiaan Quast and Randall  Pruim and Ben Marwick and Charlotte Wickham and Oliver Keyes and Miao Yu and Daniel Emaasit and Thierry Onkelinx and Alessandro Gasparini and Marc-Andre Desautels and Dominik Leutnant and {MDPI} and {Taylor and Francis} and Oguzhan Ögreden and Dalton Hance and Daniel Nüst and Petter Uvesten and Elio Campitelli and John Muschelli and Alex Hayes and Zhian N. Kamvar and Noam Ross and Robrecht Cannoodt and Duncan Luguern and David M. Kaplan and Sebastian Kreutzer and Shixiang Wang and Jay Hesselberth and Rob Hyndman},
+    year = {2022},
+    note = {R package version 0.24},
+    url = {https://CRAN.R-project.org/package=rticles},
+  }
+  
 @article{van_calster_calibration_2019,
 	title = {Calibration: the {Achilles} heel of predictive analytics},
 	volume = {17},
@@ -13,12 +98,22 @@
 	file = {Full Text PDF:C\:\\Users\\ditdi\\Zotero\\storage\\U6Q7MIZV\\Van Calster et al. - 2019 - Calibration the Achilles heel of predictive analy.pdf:application/pdf},
 }
 
+@article{probstTuneNotTune,
+  title = {To {{Tune}} or {{Not}} to {{Tune}} the {{Number}} of {{Trees}} in {{Random Forest}}},
+  author = {Probst, Philipp and Boulesteix, Anne-Laure},
+  pages = {18},
+  journal = {Journal of Machine Learning Research},
+  abstract = {The number of trees T in the random forest (RF) algorithm for supervised learning has to be set by the user. It is unclear whether T should simply be set to the largest computationally manageable value or whether a smaller T may be sufficient or in some cases even better. While the principle underlying bagging is that more trees are better, in practice the classification error rate sometimes reaches a minimum before increasing again for increasing number of trees. The goal of this paper is four-fold: (i) providing theoretical results showing that the expected error rate may be a non-monotonous function of the number of trees and explaining under which circumstances this happens; (ii) providing theoretical results showing that such non-monotonous patterns cannot be observed for other performance measures such as the Brier score and the logarithmic loss (for classification) and the mean squared error (for regression); (iii) illustrating the extent of the problem through an application to a large number (n = 306) of datasets from the public database OpenML; (iv) finally arguing in favor of setting T to a computationally feasible large number as long as classical error measures based on average loss are considered.},
+  file = {C\:\\Users\\ditdi\\Zotero\\storage\\WSY3C8VL\\Probst et Boulesteix - To Tune or Not to Tune the Number of Trees in Rand.pdf}
+}
+
 @article{base,
     title = {R: A Language and Environment for Statistical Computing},
     author = {{R Core Team}},
     organization = {R Foundation for Statistical Computing},
-    year = {2021},
-    note = {version 4.1.2},
+    year = {2023},
+    note = {version 4.2.3},
+    url = {https://www.R-project.org/},
   }
 
 @article{andaurnavarroSystematicReviewIdentifies2022,

@@ -188,7 +188,7 @@ for (run in 1:n_runs) {
                               positive = "pos")
       start_tune <- Sys.time()
       mod <- tuneRanger(task = task,
-                        measure = list(logloss),
+                        measure = list(mlr::logloss),
                         tune.parameters = c("mtry", "min.node.size"),
                         num.trees = 500,
                         num.threads = 1,

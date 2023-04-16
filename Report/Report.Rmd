@@ -34,13 +34,13 @@ options(scipen=999)
 
 # Introduction
 
-Machine learning models are increasingly used in medicine for diagnostic and prognostic purposes [@wessler_tufts_2017]. Risk estimates are used to assist clinical decisions (e.g., whether to undergo treatment). A popular set of techniques in clinical research is tree-based methods [@mitchell_machine_1997], among which random forests are particularly prevalent [@uddin_comparing_2019;@andaurnavarroSystematicReviewIdentifies2022]. Random forests' results are influenced by hyperparameters (e.g., the number of predictors sampled to make a split) [@mantovani_empirical_2019], which need to be set before training a model. Previous studies have shown classification accuracy (i.e., the proportion of observations correctly classified) to have little-to-no improvement when using optimal hyperparameters for a given dataset compared to hyperparameter software defaults [@bernard_influence_2009;@probst_hyperparameters_2019]. Classification accuracy is however not sufficient to evaluate a model's clinical utility: identifying a patient as positive or negative may not carry sufficient information, as the patient's predicted risk is a key element of medical decision-making. Moreover, classification accuracy depends on the chosen classification threshold, i.e., the predicted risk value above which an observation is classified as positive. For clinical purposes, discrimination (i.e., positive patients have higher risk predictions than negative patients) and calibration (i.e., risk predictions reflect patients' true risk) [@van_calster_calibration_2019] are two much more important performance metrics. Models with low discrimination may misclassify patients, while miscalibrated models can lead to over- or undertreatment if over- or underestimating patients' risks. Random forests can heavily suffer from miscalibration [@benedettoCanMachineLearning2020;@djulbegovicDiagnosticPredictiveModel2019].
+Machine learning models are increasingly used in medicine for diagnostic and prognostic purposes [@wessler_tufts_2017]. Risk estimates are used to assist clinical decisions (e.g., whether to undergo treatment). A popular set of techniques in clinical research is tree-based methods [@mitchell_machine_1997], among which random forests are particularly prevalent [@uddin_comparing_2019;@andaurnavarroSystematicReviewIdentifies2022]. Random forests' results are influenced by hyperparameters (e.g., the number of predictors sampled to make a split) [@mantovani_empirical_2019], which need to be set before training a model. Previous studies have shown using optimal hyperparameters for a given dataset leads to little-to-no improvement in classification accuracy (i.e., the proportion of observations correctly classified) compared to the classification accuracy obtained when fitting the model with hyperparameter software defaults [@bernard_influence_2009;@probst_hyperparameters_2019]. Classification accuracy is however not sufficient to evaluate a model's clinical utility: identifying a patient as positive or negative may not carry sufficient information, as the patient's predicted risk is a key element of medical decision-making. Moreover, classification accuracy depends on the chosen classification threshold, i.e., the predicted risk value above which an observation is classified as positive. For clinical purposes, discrimination (i.e., positive patients have higher risk predictions than negative patients) and calibration (i.e., risk predictions reflect patients' true risk) [@van_calster_calibration_2019] are two much more important performance metrics. Models with low discrimination may misclassify patients, while miscalibrated models can lead to over- or undertreatment if over- or underestimating patients' risks. Some clinical studies have observed random forests to heavily suffer from miscalibration [@benedettoCanMachineLearning2020;@djulbegovicDiagnosticPredictiveModel2019].
 
-A well-known way to improve model performance is to perform hyperparameter tuning, which identifies hyperparameter values for which a performance metric (e.g., deviance) is optimal for a given prediction model. This procedure requires choosing which metric is optimised, which hyperparameters are tuned, and how candidate hyperparameter values are generated. The latter two can greatly impact computational time: generally, the more hyperparameters are tuned or the more candidate values there are, the larger computational time is. Hyperparameter search algorithms may consider all possible hyperparameter values and their combinations, or use information collected earlier in the tuning procedure to tune efficiently. Computational time is important to consider in conjunction to the improvement in model performance: greater computational times and longer training periods of models may lead to a strain on resources and increase carbon emissions. For complex models, this can be as much as five times the average emissions of a car over its lifetime [@strubell_energy_2019].
+A well-known way to improve model performance is to perform hyperparameter tuning, which identifies hyperparameter values for which a performance metric (e.g., deviance) is optimal for a given prediction model. This procedure requires choosing which metric is optimised, which hyperparameters are tuned, and how candidate hyperparameter values are generated. The latter two can greatly impact computational time: generally, the more hyperparameters are tuned or the more candidate values there are, the larger computational time is. It is unclear whether this increased computational time is associated with model performance improvements. Hyperparameter search algorithms may consider all possible hyperparameter values and their combinations (e.g., grid search), or use information collected earlier in the tuning procedure to tune more efficiently (e.g., model-based optimisation)[@probst_hyperparameters_2019]. Computational time is important to consider in conjunction to the improvement in model performance: greater computational times and longer training periods of models may lead to a strain on resources and increase carbon emissions. For complex models, this can be as much as five times the average emissions of a car over its lifetime [@strubell_energy_2019].
 
 The optimal hyperparameter tuning strategy for balancing predictive performance and computational time is still an open question, particularly when considering clinically relevant performance metrics. Previous research suggests the most gain in random forest performance as measured by classification accuracy, discrimination, and the Brier score could be made by tuning the number of predictors sampled to make a split and the proportion of the sample used to fit the tree [@probst_tunability_2019]. Yang and Shami [@yang_hyperparameter_2020] found tuning using most hyperparameter search algorithms improved classification accuracy compared to default hyperparameters. Some search algorithms had greatly increased computational times without improving classification accuracy further than shorter search algorithms. So far, no study has compared different optimisation metrics' effects on model performance or computational time. Moreover, existing studies focusing on tuning procedures for random forests use high-dimensional datasets (datasets with more features than observations) whereas clinical research typically uses low-dimensional datasets (datasets with more observations than features), for which guidance regarding hyperparameter tuning is lacking [@ellenbach_improved_2021].
 
-The current project aims to identify the optimal hyperparameter tuning strategies for balancing predictive performance and computational time of random forests in low-dimensional settings. There are three simulation studies in this project to identify (i) which hyperparameters to tune, (ii) which metric to optimise, and (iii) which search algorithm to use for optimal model performance.
+The current project aims to identify the optimal hyperparameter tuning strategies for balancing predictive performance and computational time of random forests in low-dimensional settings. There are three simulation studies in this project to identify (i) which hyperparameters to tune, (ii) which metric to optimise, and (iii) which search algorithm to use for optimal model performance. A post-hoc sensitivity analysis was conducted to examine (i) separation in calibration performances observed in certain hyperparameter tuning combinations and (ii) possible interactions between hyperparameter combinations and optimisation metrics.
 
 # Methods
 
@@ -50,15 +50,19 @@ We ran three simulation studies in order to identify optimal tuning strategies i
 
 ### Study 1: Hyperparameters to tune
 
-Using datasets from the OpenML platform [@bischlOpenMLBenchmarkingSuites2021], Probst and colleagues [@probst_tunability_2019] found the number of predictors considered at a split and the sample fraction to be the two most influential hyperparameters on the discriminative performance of prediction models. These findings only investigated the effect of tuning one or two hyperparameters at once. Our first study aimed to extend these findings by considering (i) model calibration in addition to model discrimination and (ii) more combinations of hyperparameters. We examined the effect of tuning different combinations of hyperparameters on the performance of a prediction model and evaluated performance improvements in context of required computational times.
+Using datasets from the OpenML platform [@bischlOpenMLBenchmarkingSuites2021], Probst and colleagues [@probst_tunability_2019] found the number of predictors considered at a split and the sample fraction to be the two most influential hyperparameters on the discriminative performance of random forest prediction models. These findings only investigated the effect of tuning one or two hyperparameters at once. Our first study aimed to extend these findings by considering (i) model calibration in addition to model discrimination and (ii) larger combinations of hyperparameters, looking at the effect of tuning up to 5 hyperparameters at once. We examined the effect of tuning different combinations of hyperparameters on the performance of a prediction model and evaluated performance improvements in context of required computational times.
 
 ### Study 2: Optimisation metric
 
-This study aimed to identify a metric to optimise in the tuning procedure leading to the best predictive performance of a prediction model. We tuned the combination of hyperparameters considered optimal in Study 1.
+This study aimed to identify a metric to optimise in the tuning procedure leading to the best predictive performance of a random forest prediction model. We tuned the combination of hyperparameters considered optimal in Study 1.
 
 ### Study 3: Hyperparameter search algorithm
 
-This study aimed to compare hyperparameter search algorithms' performances with respect to predictive performance and computational time. We tuned the combination of hyperparameters considered optimal in Study 1 using the optimisation metric selected in Study 2.
+This study aimed to compare hyperparameter search algorithms' performances with respect to random forests' predictive performance and computational time. We tuned the combination of hyperparameters considered optimal in Study 1 using the optimisation metric selected in Study 2.
+
+### Study 4: Post-hoc sensitivity analysis
+
+This study aimed to examine how the selected hyperparameter values impacted calibration performance in random forests, and whether there was some interaction with optimisation metric. We focused on one scenario in which separation was observed in Study 1.
 
 ## Data-generating mechanism
 
@@ -66,7 +70,7 @@ All studies used the same data-generating mechanism. Different datasets were gen
 
 ### Data-generating scenarios
 
-A full factorial simulation design was used to consider the influence of data characteristics on model predictive performance and computational time. The varying simulation factors were the number of candidate predictors $p$ (range: 8, 16), the event fraction $EF$ (range: 0.1, 0.3, 0.5), and the sample size $n$ (range: $0.5N$, $1N$). $N$ is the minimum sample size required to identify effects for a given number of regression coefficients (here, 1.25$p$), expected event fraction, and expected AUC (here, 0.8), as calculated by Riley and colleagues [@riley_calculating_2020]. A total of 12 (2\*3\*2) scenarios were considered. For each scenario, 500 training datasets were generated, yielding a total of 6,000 datasets per study. Scenario sample sizes are detailed in Table \ref{tab:scenarios}.
+A full factorial simulation design was used to consider the influence of data characteristics on model predictive performance and computational time. The varying simulation factors were the number of candidate predictors $p$ (range: 8, 16), the event fraction $EF$ (range: 0.1, 0.3, 0.5), and the sample size $n$ (range: $0.5N$, $1N$). $N$ is the minimum sample size required to identify effects for a given number of regression coefficients (here, 1.25$p$), expected event fraction, and expected AUC (here, 0.8), as calculated by Riley and colleagues [@riley_calculating_2020]. A total of 12 (2\*3\*2) scenarios were considered. For each scenario, 500 training datasets were generated, yielding a total of 6,000 datasets per study. Scenario sample sizes are detailed in Table \ref{tab:scenarios}. Study 4 only considered one scenario, with 250 datasets.
 
 ```{r, results = "asis"}
 load("./../DGM_data/scenarios.RData")
@@ -101,7 +105,7 @@ Training and validation datasets were simulated under a logistic model with stro
 
 In Formula \ref{binomial}, $\beta_0$, $\beta$, $\gamma$ are respectively the intercept, main effect regression coefficient, and interaction effect regression coefficient of the data generating model, hereafter called "true effects".
 
-A validation dataset ($n = 100,000$ for study 1 and $n = 10,000$ for studies 2 and 3) to evaluate model performance was generated for each training dataset. The size of the validation dataset was reduced after study 1 due to storage constraints.
+A validation dataset ($n = 100,000$ for study 1 and $n = 10,000$ for studies 2 to 4) to evaluate model performance was generated for each training dataset. The size of the validation dataset was reduced after study 1 due to storage constraints.
 
 ### True effect estimation
 
@@ -140,13 +144,15 @@ validation_betas_matrix %>%
                include.colnames = F)
 ```
 
-## Methods
+## Simulation methods
 
 ### Study 1: Hyperparameters to tune
 
 We varied which hyperparameters were tuned when fitting a random forest model using the R package `ranger` [@ranger] via the R package `caret` [@caret]. We used grid search to optimise deviance. 5-fold cross-validation was used.
 
-Considering all possible combinations of 5 hyperparameters leads to 32 tuning procedures on each dataset. Due to the unfeasibility of such a large-scale approach, we reduced the number of combinations studied: only hyperparameter combinations including at least `mtry` (the number of predictors randomly sampled to make a split) and `min.node.size` (the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity) were considered. Other hyperparameters which could be included in combinations were `replace` (whether the data used to fit a single tree is sampled with or without replacement), `sample.fraction` (the proportion of the data used to fit a single tree), and `splitrule` (the way in which a split is picked). Default values and tuning ranges used in this study are presented in Table \ref{tab:hyp_ranges}.
+Random forests can have up to ten hyperparameters [@ranger], some of which are only used if another hyperparameter has a certain value (e.g., `num.random.splits` is an additional hyperparameter when `splitrule` is set to `extratrees`). Considering all possible combinations of all these hyperparameters leads to 1023 possible combinations. Due to the unfeasibility of such a large-scale approach, we only studied hyperparameters included in a previous study by Probst and colleagues, which focused on hyperparameters' effects on predictive performance [@probst_tunability_2019] in order to expand the findings by considering hyperparameters' combined effects. This led to the inclusion of `mtry` (the number of predictors randomly sampled to make a split), `min.node.size` (the minimum number of observations for a node to be formed, i.e., the point at which a split should not be computed regardless of impurity), `replace` (whether the data used to fit a single tree is sampled with or without replacement), and `sample.fraction` (the proportion of the data used to fit a single tree). Although `num.trees` (the number of trees used in the random forest) was also included in the prior study, it was not included in this study as it has been shown that this hyperparameter should simply be set to a high, computationally feasible, number [@probstTuneNotTune]. Additionally, we included `splitrule` (the way in which a split is picked) as it can be tuned by commonly used software such as `caret` [@caret] (which does not tune other hyperparameters such as `replace`). Hyperparameter default values and tuning ranges used in this study are presented in Table \ref{tab:hyp_ranges}.
+
+Considering all possible combinations of these five hyperparameters still leads to an unfeasible number of 31 combinations. We used Probst and colleagues' [@probst_tunability_2019] results to further reduce this number. They found `mtry` and `sample.fraction` was the hyperparameter combination that led to the most gain, and that `sample.fraction` and `min.node.size` had a similar effect. The commonly used tuning package `caret` [@caret] allows for the tuning of `min.node.size`, but not `sample.fraction`. Thus, we only considered hyperparameter combinations that included at least `mtry` and `min.node.size`, as this combination could be expected to perform well.
 
 ```{=tex}
 \begin{table}[tb]
@@ -165,7 +171,7 @@ Considering all possible combinations of 5 hyperparameters leads to 32 tuning pr
          \hline
     \end{tabular}
     \begin{tablenotes}
-      \item *For \texttt{splitrule} = extratrees, an additional parameter should be considered regarding the number of random splits to consider. This was set to its default of 1.
+      \item *For \texttt{splitrule} = \texttt{extratrees}, an additional parameter should be considered regarding the number of random splits to consider. This was set to its default of 1.
     \end{tablenotes}
     \label{tab:hyp_ranges}
 \end{table}
@@ -232,25 +238,31 @@ Grid search takes a set of possible values for each hyperparameter and uses ever
 
 Model-based optimisation first computes a given number (here, 30) of random combinations of hyperparameter values and uses each of these combinations to fit a random forest and assess its performance (here, using the deviance). Then, it fits a regression model with the hyperparameter values as predictors and the performance as the outcome to identify a combination of hyperparameter that is expected to perform better. This combination is tried, and the regression model is fit again including the new point. This is repeated a given number of times (here, 70). The best hyperparameter combination is then assessed to be the mean of the 5% best-performing combinations. This algorithm uses out-of-bag performance rather than cross-validation. We refer to Probst and colleagues [@probst_hyperparameters_2019] for details.
 
+### Study 4: Post-hoc sensitivity analysis
+
+We focused on the scenario where $p = 16, EF = 0.5, n = 1N$. We considered all combinations of hyperparameters included in Study 1. Optimisation metrics that were compared were AUC and deviance. Deviance and logarithmic loss are two mathematically extremely similar measures; deviance was chosen in this case to increase comparability to Study 1.
+
 ## Performance measures
 
-The same outcomes were used in all studies. Primary outcomes were defined as those which were used to advise on the best tuning procedures. These measures were discrimination, calibration slope, root mean square of the log of the calibration slope over all the runs of a scenario (RMSD(slope)), and computational time. Discrimination was measured by the AUC and assessed whether positive observations have higher predicted risk than negative observation. Calibration was measured by the calibration slope (as calculated by Van Calster [@benvancalster_benvancalsterclassimb_calibration_2022]) and assessed the extent to which predicted risks reflect true risks. RMSD(slope) assessed the extent to which the calibration slopes varied within a data-generating mechanism and how much they differed from the ideal value of 1, as used by Van Calster and colleagues [@van_calster_regression_2020]. Computational time was the amount of time for which a given tuning procedure ran, measured in seconds.
+The same outcomes were used in all studies. Primary outcomes were defined as those which were used to advise on the best tuning procedures. These measures were AUC, calibration slope, root mean square of the log of the calibration slope over all the runs of a scenario (RMSD(slope)), and computational time. Discrimination was measured by the AUC and assessed whether positive observations have higher predicted risk than negative observation. Calibration was measured by the calibration slope and assessed the extent to which predicted risks reflect true risks. RMSD(slope) assessed the extent to which the calibration slopes varied within a data-generating mechanism and how much they differed from the ideal value of 1, as used by Van Calster and colleagues [@van_calster_regression_2020]. Computational time was the amount of time for which a given tuning procedure ran, measured in seconds.
 
 Candidate optimisation metrics from Study 2 were also included as secondary outcomes in all studies. These were the classification accuracy, the calibration intercept, the Brier score, the logarithmic loss, and Cohen's Kappa.
 
-Model performance metrics were estimated using the predictions of the model on a validation set independently generated under the same data generating mechanisms. For each data simulation scenario and tuning procedure combination, we computed the average and Monte Carlo error of each of these performance measures.
-
-We evaluated and compared model predictive performance between hyperparameter combinations, optimisation metrics, and search algorithms, in studies 1, 2, and 3, respectively. We visualized whether certain hyperparameter combinations, optimisation metrics, or hyperparameter search algorithms had a notably larger runtime compared to others, without showing a substantial increase in performance. The best hyperparameter combination, optimisation metric, and hyperparameter search algorithm were assessed considering all primary outcomes.
+Model performance metrics were estimated using the predictions of the model on a validation set independently generated under the same data generating mechanisms. For each tuning procedure, we computed the average and Monte Carlo error of each of these performance measures. We visualized whether certain hyperparameter combinations, optimisation metrics, or hyperparameter search algorithms had a notably larger runtime compared to others, without showing a substantial increase in performance. The best hyperparameter combination, optimisation metric, and hyperparameter search algorithm were assessed considering all primary outcomes.
 
 ## Software
 
-Data was simulated and tuning procedures were performed on a high-performance computer. This was done in R version 4.2.2, using packages `MASS`, `dplyr`, `ranger`, `pROC`, `psych`, and in the case of study 3, `tuneRanger` [INCLUDE CITATIONS FOR ALL OF THESE]. Summary statistics and figures were generated on a personal computer using R version 4.2.3 [@base] using packages `tidyverse`, `viridis`, and `xtable` [CITE ALL OF THESE].
+Data was simulated and tuning procedures were performed on a high-performance computer. This was done in R version 4.2.2, using packages `MASS` [@mass], `dplyr` [@dplyr], `ranger` [@ranger], `pROC` [@proc], `psych` [@psych], and in the case of study 3, `tuneRanger` [@probst_hyperparameters_2019]. Summary statistics and figures were generated on a personal computer using R version 4.2.3 [@base] using packages `tidyverse` [@tidyverse], `viridis` [@viridis], `xtable` [@xtable], and `rticles` [rticle].
+
+## Error handling
+
+Where performance metrics used the natural logarithm of risk predictions, values of 0 and 1 were recoded to 1e-16 and 1-1e-16, respectively, in order to avoid missing values in computation. The primary cause for a run failing was reaching the maximum allocated time. Failed runs were re-run with a higher maximum allocated time. We compared the time runs completed at the first attempt took with the time runs completed at later attempts took to ensure no selection bias in runtime was introduced.
 
 ## Reproducibility
 
 All code used to generate and analyse data is available at [LINK TO THE GITHUB REPO].
 
-Data cannot be perfectly reproduced due to the nature of this study: the runtime variable is highly dependent on the system on which the script is run and other tasks being performed, so it can never be perfectly reproduced. Additionally, the high-performance computer had two operating systems responding differently to seeds. Runs were assigned to operating systems at random. However, these issues are only a concern with regard to an exact reproduction of the data, and should only lead to minor differences in results and no differences in interpretation.
+Data cannot be perfectly reproduced due to the nature of this study: the runtime variable is highly dependent on the system on which the script is run and other tasks being performed, so it can never be perfectly reproduced. Additionally, the high-performance computer had two operating systems responding differently to seeds [INCLUDE NAMES]. Runs were assigned to operating systems at random. However, these issues are only a concern with regard to an exact reproduction of the data, and should only lead to minor differences in results and no differences in interpretation.
 
 # Results
 
@@ -302,13 +314,15 @@ tab %>%
                include.colnames = F)
 ```
 
-Large increases in runtime were observed when tuning 4 or more hyperparameters, with noticeably worse calibration performance and no observable change in other performance measures (Figure \ref{fig:study1fig}, Table \ref{tab:results1}). Varying hyperparameter tuning combinations had very limited effects on discrimination, with a mean AUC of `r round(mean_AUC, 2)` (SD = `r round(sd_AUC, 2)`) across all hyperparameter combinations. A large effect was observed on model calibration and computational time. Model calibration varied considerably within (Figure \ref{fig:study1fig}) and between (Table \ref{tab:results1}, Figure \ref{fig:study1fig}, Figure \ref{fig:s1calplot}) combinations. The best calibration performance was obtained by tuning `mtry` and `min.node.size`, which had a median calibration slope of `r summary_table_study1$'Calslope_median'[summary_table_study1$'hp_combination' == "mtry + min.node.size"]` across all scenarios. This performance was among the most stable with an IQR of `r summary_table_study1$'Calslope_IQR'[summary_table_study1$'hp_combination' == "mtry + min.node.size"]`. Tuning `mtry`, `min.node.size`, and `replace` performed similarly well, but took twice as long to run. `mtry` and `min.node.size` was thus selected as the best combination to tune. This is also visible in the calibration plots: calibration seems best when doing minimal tuning [OR SOMETHING TO THIS EXTENT ONCE I HAVE SAID PLOTS]
+Large increases in runtime were observed when tuning 4 or more hyperparameters. Tuning large combinations of hyperparameters also led to noticeably worse calibration performance, but no observable change in other performance measures (Figure \ref{fig:study1fig}, Table \ref{tab:results1}). Varying hyperparameter tuning combinations had very limited effects on discrimination, with a mean AUC of `r round(mean_AUC, 2)` (SD = `r round(sd_AUC, 2)`) across all hyperparameter combinations. A large effect was observed on model calibration and computational time. Model calibration varied considerably within (Figure \ref{fig:study1fig}) and between (Table \ref{tab:results1}, Figure \ref{fig:study1fig}, Figure \ref{fig:s1calplot}) combinations. The best calibration performance was obtained by tuning `mtry` and `min.node.size`, which had a median calibration slope of `r summary_table_study1$'Calslope_median'[summary_table_study1$'hp_combination' == "mtry + min.node.size"]` across all scenarios. This performance was among the most stable with an IQR of `r summary_table_study1$'Calslope_IQR'[summary_table_study1$'hp_combination' == "mtry + min.node.size"]`. Tuning `mtry`, `min.node.size`, and `replace` performed similarly well, but took twice as long to run. The worst calibration performances were observed when tuning `mtry`, `min.node.size`, `sample.fraction`, and `splitrule`, or these four hyperparameters and `replace`. Including `splitrule` in any combination led to a median calibration slope above 1.21 and an RMSD(slope) above 0.36, while combinations without `splitrule` has median calibration slopes below 1.15 and RMSD(slope) below 0.32. These observations are also visible in the calibration plots: calibration seems best when doing minimal tuning [OR SOMETHING TO THIS EXTENT ONCE I HAVE SAID PLOTS]. `mtry` and `min.node.size` was thus selected as the best combination to tune.
 
-```{r, fig.cap="Performance of each hyperparameter tuning combination in the example scenario where $p$ = 8, $EF$ = 0.3, $n = 1N$\\label{fig:study1fig}", fig.height=8, out.width="100%"}
-plot_ex_met
+```{r, fig.cap="Performance of each hyperparameter tuning combination in the example scenario where $p$ = 8, $EF$ = 0.3, $n = 1N$. Red dotted lines show ideal performance.\\label{fig:study1fig}", fig.height=8, fig.width=6}
+plot_ex_met +
+  theme(plot.margin = unit(c(0.5, 1, 0.5, 0.5), "lines"),
+        legend.position = c(0.77, 0.1))
 ```
 
-```{r, fig.cap="Calibration plots for a sample of the datasets where $EF$ = 0.5\\label{fig:s1calplot}", out.width="100%"}
+```{r, fig.cap="Calibration plots comparing hyperparameter combinations for every tenth dataset in scenarios where $EF$ = 0.5\\label{fig:s1calplot}", out.width="100%"}
 knitr::include_graphics("./../Study1/Data/plot_EF_5.pdf")
 ```
 
@@ -320,7 +334,7 @@ Secondary outcomes showed similar patterns (Figure \ref{fig:study1fig}). Classif
 load("./../Study2/Data/results.RData")
 ```
 
-We tuned `mtry` and `min.node.size`. The average and Monte Carlo error of primary outcomes for each optimisation metric are presented in Table \ref{tab:results2}. Effects were homogeneous across scenarios. We illustrate results specific to the scenario where $p = 8$, $EF = 0.3$, and $n = 1N$ in Figures \ref{fig:study2fig} and \ref{fig:study2extra}. Calibration plots for the scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s2calplot}. Results for other scenarios can be visualised at [THIS WILL BE A LINK TO A SHINY APP].
+Based on the findings of Study 1, we tuned `mtry` and `min.node.size`. The average and Monte Carlo error of primary outcomes for each optimisation metric are presented in Table \ref{tab:results2}. Effects were homogeneous across scenarios. We illustrate results specific to the scenario where $p = 8$, $EF = 0.3$, and $n = 1N$ in Figures \ref{fig:study2fig} and \ref{fig:study2extra}. Calibration plots for the scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s2calplot}. Results for other scenarios can be visualised at [THIS WILL BE A LINK TO A SHINY APP].
 
 ```{r, results='asis'}
 tab <- summary_table_study2 %>% 
@@ -353,7 +367,7 @@ addtorow$command <- paste0(
 )
 
 tab %>%
-  xtable(caption = "Average performance of hyperparameter combinations (aggregated over all scenarios). Rows are sorted in ascending order of RMSD(slope).",
+  xtable(caption = "Average performance of optimisation metrics (aggregated over all scenarios). Rows are sorted in ascending order of RMSD(slope).",
          label = "tab:results2",
          align = c(rep("l", 2), rep("c", 3), "c")) %>% 
   print.xtable(include.rownames = FALSE,
@@ -367,20 +381,105 @@ tab %>%
                include.colnames = F)
 ```
 
-Varying optimisation metrics had very limited effects on performance and computational time. Discrimination was equal across all optimisation metrics. All optimisation metrics showed similar model calibration performance, with the exception of optimising Cohen's Kappa and classification accuracy, which showed a worse median calibration performance. On the other hand, there are no visible differences in the calibration plots between optimisation metrics (Figure \ref{fig:s2calplot}). Runtime was comparable across all optimisation metrics. We select logarithmic loss to be optimised in Study 3, as it is among the best performing metrics and is an in-built metric in random forest optimisation packages (e.g. `tuneRanger` [@probst_hyperparameters_2019]), unlike deviance.
+Varying optimisation metrics had very limited effects on performance and computational time. Discrimination was equal across all optimisation metrics and close to 0.7, the AUC of the data when interactions are not accounted for. All optimisation metrics showed similar model calibration performance, with the exception of optimising Cohen's Kappa and classification accuracy, which showed a worse median calibration performance. On the other hand, there are no notable differences in the calibration plots between optimisation metrics (Figure \ref{fig:s2calplot}). Runtime was comparable across all optimisation metrics. We select logarithmic loss to be optimised in Study 3, as it is among the best performing metrics and is an in-built metric in random forest optimisation packages (e.g. `tuneRanger` [@probst_hyperparameters_2019]), unlike deviance, making our research more easily applicable for model-users.
 
-```{r, fig.cap="Performance of each optimisation metric in the example scenario where $p$ = 8, $EF$ = 0.3, $n$ = 1$N$\\label{fig:study2fig}", fig.height=8, fig.width=6}
+```{r, fig.cap="Performance of each optimisation metric in the example scenario where $p$ = 8, $EF$ = 0.3, $n$ = 1$N$. Red dotted lines show ideal performance.\\label{fig:study2fig}", fig.height=8, fig.width=6}
 plot_ex_met
 ```
 
-```{r, fig.cap="Calibration plots for 200 of the datasets where $EF$ = 0.5\\label{fig:s2calplot}", out.width="100%"}
+```{r, fig.cap="Calibration plots comparing optimisation metrics for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s2calplot}", out.width="100%"}
 knitr::include_graphics("./../Study2/Output/plot_EF_5.pdf")
 ```
 
 Secondary outcomes showed no substantial difference in performance (Figure \ref{fig:study2fig}) between optimisation metrics. We further investigated whether optimising a given metric in the training dataset led to better performance on that metric in the validation dataset. This is presented in Figure \ref{fig:study2extra}. For all metrics, it seems performance was not improved by optimising for that metric.
 
-```{r, fig.cap="Comparison of the performance of optimisation metrics and corresponding performance metrics in the example scenario where $p$ = 8, $EF$ = 0.3, $n$ = 1$N$\\label{fig:study2extra}", fig.height=8, fig.width=6}
+```{r, fig.cap="Comparison of the performance of optimisation metrics and corresponding performance metrics in the example scenario where $p$ = 8, $EF$ = 0.3, $n$ = 1$N$. Red dotted lines show ideal performance.\\label{fig:study2extra}", fig.height=8, fig.width=6}
 plot_ex_same
 ```
+
+## Study 3: Hyperparameter search algorithms
+
+```{r}
+load("./../Study3/Data/results.RData")
+```
+
+Based on findings from Studies 1 and 2, we tuned `mtry` and `min.node.size`, optimising for logarithmic loss. The average and Monte Carlo error of primary outcomes for each search algorithm are presented in Table \ref{tab:results3}. Effects differed across scenarios: while model-based optimisation had comparable runtimes across all scenarios (leading to a lower overall standard deviation), runtimes for grid search and random search varied between scenarios (Figure \ref{fig:s3time}). Grid search always took longer than random search. Model-based optimisation was at times longer than grid search (e.g., when $p = 8, EF = 0.3, n = 0.5N$), shorter than random search (e.g., when $p = 16, EF = 0.1, n = 1N)$), or fell between grid search and random search (e.g., when $p = 8, EF = 0.5, n = 1N$). However, predictive performance was homogeneous across scenarios. We illustrate results specific to the scenario where $p = 8$, $EF = 0.3$, and $n = 1N$ in Figure \ref{fig:study3fig}. Calibration plots for the scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s3calplot}. Results for other scenarios can be visualised at [THIS WILL BE A LINK TO A SHINY APP].
+
+```{r, results='asis'}
+tab <- summary_table_study3 %>% 
+  arrange(Runtime_mean) %>% 
+  mutate(`Search algorithm` = recode(algorithm,
+                                     mbo = "Model-based optimisation",
+                                     grid = "Grid search",
+                                     random = "Random search"),
+         AUC = paste0(AUC_mean, " (", AUC_sd, ")"),
+         `Calibration slope` = paste0(Calslope_median, " (", Calslope_IQR, ")"),
+         `Runtime (seconds)` = paste0(
+           format(Runtime_mean, nsmall = 1),
+           " (",
+           str_pad(format(Runtime_sd, nsmall = 1, trim = TRUE), 5, pad = "0"),
+           ")"
+           )) %>% 
+  dplyr::select(`Search algorithm`, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+
+addtorow <- list()
+addtorow$pos <- list(0)
+addtorow$command <- paste0(
+  paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+  paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+  '\\\\',
+  "\\multicolumn{1}{c}{}",
+  paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean (SD)"), "}", collapse = ""),
+  '\\\\'
+)
+
+tab %>%
+  xtable(caption = "Average performance of hyperparameter search algorithms (aggregated over all scenarios). Rows are sorted in ascending order of runtime.",
+         label = "tab:results3",
+         align = c(rep("l", 2), rep("c", 3), "r")) %>% 
+  print.xtable(include.rownames = FALSE,
+               caption.placement = "top",
+               table.placement = "tb",
+               comment = FALSE,
+               hline.after = c(-1, 0, 3),
+               #size="\\fontsize{8pt}{8pt}\\selectfont",
+               # scalebox = "0.8",
+               add.to.row = addtorow,
+               include.colnames = F)
+```
+
+```{r, fig.cap="Comparison of runtimes for the hyperparameter search algorithms between scenarios\\label{fig:s3time}", fig.height=8, fig.width=6}
+per_scenario_runtime
+```
+
+Varying hyperparameter search algorithm did not appear to have an effect on model performance. All three algorithms showed some variation in calibration slope and intercept, but seemed to perform well overall. Random search seems to have a slightly stronger tendency to underestimate risk than grid search and model-based optimisation. The AUC showed some variation around 0.7, which is the expected AUC when not accounting for interactions in the data. Cohen's Kappa showed some variation within hyperparameter search algorithms. Brier score, logarithmic loss, and classification accuracy did not show variations.
+
+```{r, fig.cap="Performance of each hyperparameter search algorithm in the example scenario where $p$ = 8, $EF$ = 0.3, $n$ = 1$N$. Red dotted lines show ideal performance.\\label{fig:study3fig}", fig.height=8, fig.width=6}
+plot_ex_met
+```
+
+```{r, fig.cap="Calibration plots comparing hyperparameter search algorithms for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s3calplot}.", out.width="100%"}
+knitr::include_graphics("./../Study3/Output/plot_EF_5.pdf")
+```
+
+## Study 4: Post-hoc sensitivity analysis
+
+text here
+
+# Discussion
+
+We aimed to identify optimal tuning strategies for random forests used for clinical prediction modelling in low-dimensional settings. To this end, we studied the impact of the choice of hyperparameters being tuned, the optimisation metric used, and the hyperparameter search algorithm on model performance and computational time. We ran a simulation study for each of these three choices, using 500 runs for each of twelve data simulation scenarios. Following the first study, we concluded that tuning only `mtry` and `min.node.size` led to the best performance, and strongly advise against tuning more hyperparameters, as this leads to large increases in computational time and a decrease in calibration performance. This advice is particularly strong for `splitrule`, as tuning this hyperparameter systematically led to worse calibration outcomes compared to not tuning it. Following the second study, we concluded that most optimisation metrics led to comparable performances on all outcomes. We advise against using classification accuracy and Cohen's Kappa as optimisation metrics as these had slightly worse calibration performances. Due to existing software implementations, we opted to optimise logarithmic loss in our final study. We concluded that grid search, random search, and model-based optimisation all led to models with comparable predictive performance. Computational time heavily depended on sample size and the number of iterations for grid search and random search. Model-based optimisation had similar computational times across scenarios. While we do not advise against the use of any of these three hyperparameter search algorithms, we suggest the use of model-based optimisation via `tuneRanger` [@probst_hyperparameters_2019] as this, by default, tunes optimising for logarithmic loss rather than accuracy, and does not require the definition of a grid. [SOME COMMENTS ABOUT THE SENSITIVITY ANALYSIS]
+
+We extend findings by Probst and colleagues [@probst_tunability_2019] by showing that considering larger combinations of hyperparameters does not improve performance. Additionally, we provide previously lacking empirical findings advising against tuning `splitrule`. We also provide previously lacking comparisons between optimisation metrics and advise against using optimisation metrics based on predicted class rather than predicted risk. Finally, we extend findings by Yang and Shami [@yang_hyperparameter_2020] which showed grid search to needlessly increase computational time compared to other search algorithms as it did not improve classification accuracy. Our results complement this by showing grid search does not improve more clinically relevant, performance metrics, such as calibration and discrimination. There are some caveats to this finding: the computational time of grid search is heavily dependent on the size of the grid (and, similarly, the computational time of random search is dependent on the number of iterations), making it occasionally more computationally efficient than model-based optimisation. However, grid search requires the researcher to not only select which hyperparameters are tuned and which metric is optimised, but also the range and step size of numerical candidate hyperparameters, making it, more often than not, an inefficient algorithm involving a larger number of subjective choices than model-based optimisation. While a similar point could be made regarding the number of iterations of model-based optimisation, the application of this algorithm as computed by `tuneRanger` [@probst_hyperparameters_2019] was developed such that default values for the number of iterations lead to a relatively short computational time with good final predictive performance. Our findings thus reinforce findings showing model-based optimisation to be among the better search algorithms [@probst_hyperparameters_2019;@yang_hyperparameter_2020], and provide additional evidence that overall simpler tuning procedures lead to better outcomes.
+
+## Limitations and future outlook
+
+We provide an overview of possible variables in tuning procedures; however, we only provide limited insight into interactions these may have. While it is currently not computationally feasible to conduct a full factorial study, it is important to keep in mind that as our studies incorporated previous results, this may have introduced some bias in our conclusions. This may be exacerbated by the fact that variability was reduced by simulating all data under logistic regression. Tree-based methods are popular in part due to their flexibility (CITATION), such that they are appropriate for a wide variety of data. Data-generating mechanisms may have a notable impact on relevant tuning procedures; however, our results fit well with research conducted on empirical datasets considering the choice of hyperparameters to tune [@probst_tunability_2019] or the hyperparameter search algorithm [@yang_hyperparameter_2020]. We thus consider it unlikely that our findings were heavily impacted by the choice of data-generating mechanism.
+
+We did not study the effect of hyperparameter candidate values to build a grid, or the number of iterations in random search. These two search algorithms' performance are heavily dependent on user input. While our findings show them to have comparable performance to model-based optimisation, future research may show this is only the case in optimal settings. Varying the input for the grid may lead to worse predictive performances, such that future research may show model-based optimisation to not only be on par with grid search, but better with regards to model performance.
+
+## Conclusion
+
+Random forests are widely used in clinical research [@uddin_comparing_2019;@andaurnavarroSystematicReviewIdentifies2022], yet can suffer from miscalibration [@benedettoCanMachineLearning2020;@djulbegovicDiagnosticPredictiveModel2019]. We examined the impact of various tuning procedures on random forests' predictive performance for dichotomous risk predictions and on computational time. We show simpler hyperparameter tuning procedures lead to better clinically relevant outcomes without needlessly inflating computational time.
 
 \newpage

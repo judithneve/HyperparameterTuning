@@ -57,8 +57,8 @@ ui <- fluidPage(
         selected = "1"),
       checkboxGroupInput(
         inputId = "levels",
-        label = "Figure out what this should say",
-        choices = "try",
+        label = "Which levels of the predictor do you want to look at?",
+        choices = "Loading choices...",
         selected = "1"),
       width = 3
     ),
@@ -76,8 +76,12 @@ server <- function(input, output) {
   
   observe({
     updateCheckboxGroupInput(inputId = "levels",
-                             choices = if (input$study == "Study1") {HP.labs} else {opt.labs},
-                             selected = if (input$study == "Study1") {HP.labs} else {opt.labs})
+                             choices = if (input$study == "Study1") {HP.labs} else {
+                               if (input$study == "Study2") {opt.labs} else {alg.labs}
+                               },
+                             selected = if (input$study == "Study1") {HP.labs} else {
+                               if (input$study == "Study2") {opt.labs} else {alg.labs}
+                             })
   })
   
   output$perfplot <- renderPlot({

@@ -54,7 +54,7 @@ df_scale_setter <- tibble(
   AUC = rep(c(0.5, 1), each = 8),
   BrierScore = rep(c(0, 1), each = 8),
   CalIntercept = rep(c(-1, 1), each = 8),
-  CalSlope = rep(c(0, 5), each = 8),
+  CalSlope = rep(c(0, 2.5), each = 8),
   LogLoss = rep(c(0, 1), each = 8),
   Accuracy = rep(c(0, 1), each = 8),
   CohensKappa = rep(c(0, 1), each = 8),
@@ -100,11 +100,11 @@ df_timelimits <- expand.grid(
 
 # labeller vectors
 ## performance metric
-Metric.labs <- paste("Performance metric:", c("calibration slope", "calibration intercept", "Brier score", "logarithmic loss", "AUC", "classification accuracy", "Cohen's Kappa"))
+Metric.labs <- paste("Performance metric:\n", c("calibration slope", "calibration intercept", "Brier score", "logarithmic loss", "AUC", "classification accuracy", "Cohen's Kappa"))
 names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AUC", "Accuracy", "CohensKappa")
 ## optimisation metric
 opt.labs <- c("CalSlope", "CalInt", "BrierScore", "LogLoss", "AUC", "Accuracy", "Kappa", "Deviance")
-names(opt.labs) <- c(Metric.labs, "Deviance")
+names(opt.labs) <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa", "Deviance")
 opt.labs <- opt.labs[c(8, 5, 4, 6, 7, 3, 2, 1)]
 
 # define the colour palettes
@@ -149,8 +149,7 @@ plot_sc_met <- df %>%
   scale_shape_manual(breaks = names(opt.labs),
                      labels = opt.labs,
                      values = rep(16, 8)) +
-  labs(caption = "Red dotted lines show ideal performance.",
-       x = "Runtime (seconds)",
+  labs(x = "Runtime (seconds)",
        col = "Optimisation metric",
        shape = "Optimisation metric")
 
@@ -191,8 +190,7 @@ plot_ex_met <- df %>%
   scale_shape_manual(breaks = opt.labs,
                      labels = names(opt.labs),
                      values = rep(16, 8)) +
-  labs(caption = "Red dotted lines show ideal performance.",
-       x = "Runtime (seconds)",
+  labs(x = "Runtime (seconds)",
        col = "Optimisation metric",
        shape = "Optimisation metric")
 ```
@@ -241,8 +239,7 @@ plot_ex_same <- df %>%
                      labels = c("Same optimisation and performance metric",
                                 "Different optimisation and performance metric"),
                      values = c(16, 1)) +
-  labs(caption = "Red dotted lines show ideal performance.",
-       x = "Runtime (seconds)",
+  labs(x = "Runtime (seconds)",
        col = "Optimisation metric",
        shape = "Optimisation metric")
 ```
