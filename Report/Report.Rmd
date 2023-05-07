@@ -423,7 +423,7 @@ plot_ex_met
 ```
 
 ```{r, fig.cap="Calibration plots comparing hyperparameter search algorithms for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s3calplot}", out.width="100%", fig.pos = "!p"}
-knitr::include_graphics("./../Study3/Output/plot_EF_5.pdf")
+knitr::include_graphics("./../Study3/Output/plot_ef5.pdf")
 ```
 
 ```{r, results='asis'}
