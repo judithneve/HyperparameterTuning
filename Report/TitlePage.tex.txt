@@ -1,0 +1,41 @@
+\documentclass[14pt]{extarticle}
+\usepackage{times}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{titlepage}
+
+\vspace*{\baselineskip}
+Research Master’s programme Methodology and Statistics for the
+Behavioural, Biomedical and Social Sciences \\
+Utrecht University, the Netherlands
+
+\vspace{4\baselineskip}
+
+MSc Thesis Judith N\`{e}ve de M\'{e}vergnies (0070661) \\
+TITLE: Performance of clinical prediction models versus computational
+time for random forest hyperparameter tuning procedures: A
+simulation study \\
+May 2023 
+
+\vspace{4\baselineskip}
+
+Supervisors: \\
+Dr. Maarten van Smeden (University Medical Center Utrecht) \\
+Dr. Ben Van Calster (KU Leuven) \\
+Zo\"{e} Dunias (University Medical Center Utrecht)
+
+\vspace{2\baselineskip}
+
+Second grader: \\
+Prof. Dr. Irene Klugkist (Utrecht University) 
+
+\vspace{4\baselineskip}
+
+Preferred journal of publication: Statistics in Medicine \\
+Word count: 5276
+
+\end{titlepage}
+
+\end{document}

@@ -1,0 +1,268 @@
+---
+title: "Supplementary materials"
+author: "Judith Neve"
+output: pdf_document
+header-includes:
+  - \usepackage{lscape}
+  - \usepackage{threeparttable}
+  - \usepackage{tabularx}
+  - \renewcommand{\thetable}{S\arabic{table}}
+  - \renewcommand{\thefigure}{S\arabic{figure}}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE)
+library(tidyverse)
+library(xtable)
+keep_latex <- function(x) {
+  x
+}
+```
+
+```{=tex}
+\begin{table}[!h]
+\centering
+\caption{Allocated runtimes for each study.}
+    \begin{tabularx}{\textwidth}{lllllll}
+\hline
+\multicolumn{1}{X}{Study} &
+  \multicolumn{1}{X}{Number of datasets generated in one run} &
+  \multicolumn{1}{X}{Number of runs} &
+  \multicolumn{1}{X}{Original allocated time per run} &
+  \multicolumn{1}{X}{Allocated runtime for rerunning of timed out runs} &
+  \multicolumn{1}{X}{Number of timed out runs} &
+  \multicolumn{1}{X}{Number of reruns taking longer than the original allocated runtime} \\ \hline
+1 (8 predictor scenarios)  & 1  & 3000 & 6 hours   & 8 hours  & 0   & 0   \\
+1 (16 predictor scenarios) & 1  & 3000 & 30 hours  & 32 hours & 188 & 35* \\
+2                          & 1  & 6000 & 3.5 hours & 4 hours  & 1   & 0   \\
+3                          & 10 & 600  & 6 hours   & 7 hours  & 7   & 0  \\ \hline
+\end{tabularx}
+\begin{tablenotes}
+      \item *among these, 13 failed due to time-out. These were rerun with a maximum allocated time of 35 hours.
+    \end{tablenotes}
+\end{table}
+```
+
+```{r}
+load("./../Study1/Data/results.RData")
+```
+
+Timed out runs for Study 1 (16 predictor scenarios): `r paste(failed_1 %>% sort(), collapse = ", ")`
+
+Timed out reruns for Study 1 (16 predictor scenarios): `r paste(failed_1_re %>% sort(), collapse = ", ")`
+
+```{r}
+load("./../Study2/Data/results.RData")
+```
+
+Timed out runs for Study 2: `r paste(failed_2 %>% sort(), collapse = ", ")`
+
+```{r}
+load("./../Study3/Data/results.RData")
+```
+
+Timed out runs for Study 3: `r paste(failed_3 %>% sort(), collapse = ", ")`
+
+```{r}
+load("./../Study1/Data/results.RData")
+```
+
+\begin{landscape}
+```{r, results='asis'}
+for (ef in c(0.1, 0.3, 0.5)) {
+  tab <- summary_table_study1_sc %>%
+    filter(EF == ef) %>%
+    group_by(p, EF, n_prop) %>% 
+    arrange(p, EF, n_prop, Runtime_mean) %>% 
+    mutate(`Tuned hyperparameters` = hp_combination,
+           p = as.integer(p),
+           n_prop = paste0(n_prop, "$N$"),
+           AUC = paste0(format(AUC_mean, nsmall = 2),
+                        " (", format(AUC_sd, nsmall = 2), ")"),
+           `Calibration slope` = paste0(format(Calslope_median, nsmall = 2),
+                                        " (", format(Calslope_IQR, nsmall = 2), ")"),
+           `Runtime (seconds)` = paste0(
+             format(Runtime_mean, nsmall = 2),
+             " (",
+             str_pad(format(Runtime_sd, nsmall = 2, trim = TRUE), 7, pad = "0"),
+             ")"
+             )) %>% 
+    dplyr::select(`Tuned hyperparameters`, p, EF, n_prop, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+  colnames(tab)[2:4] <- c("$p$", "$EF$", "$n$")
+  
+  addtorow <- list()
+  addtorow$pos <- list(0)
+  addtorow$command <- paste0(
+    paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+    paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+    '\\\\',
+    "\\multicolumn{1}{c}{}",
+    paste(rep("& \\multicolumn{1}{c}{}", 3), collapse = ""),
+    paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean (SD)"), "}", collapse = ""),
+    '\\\\'
+  )
+  
+  tab %>%
+    xtable(caption = paste0("Average performance of hyperparameter combinations for each scenario where $EF$ = ", ef, ". Within each scenario, rows are sorted in ascending order of runtime."),
+           label = "tab:results1sc",
+           align = c(rep("l", 2), rep("c", 3+3), "r")) %>%
+    print.xtable(include.rownames = FALSE,
+                 caption.placement = "top",
+                 table.placement = "tb",
+                 comment = FALSE,
+                 hline.after = c(-1, seq(0, 36, by = 9)),
+                 #size="\\fontsize{8pt}{8pt}\\selectfont",
+                 scalebox = "0.9",
+                 sanitize.text.function = keep_latex,
+                 add.to.row = addtorow,
+                 include.colnames = F)
+}
+```
+\end{landscape}
+
+```{r, fig.cap="Calibration plots comparing hyperparameter combinations for every tenth dataset in scenarios where $EF$ = 0.1.", out.width="100%"}
+knitr::include_graphics("./../Study1/Output/plot_ef1.pdf")
+```
+
+```{r, fig.cap="Calibration plots comparing hyperparameter combinations for every tenth dataset in scenarios where $EF$ = 0.3.", out.width="100%"}
+knitr::include_graphics("./../Study1/Output/plot_ef3.pdf")
+```
+
+```{r}
+load("./../Study2/Data/results.RData")
+```
+
+\begin{landscape}
+```{r, results='asis'}
+for (ef in c(0.1, 0.3, 0.5)) {
+  tab <- summary_table_study2_sc %>%
+    filter(EF == ef) %>%
+    group_by(p, EF, n_prop) %>% 
+    arrange(p, EF, n_prop, `RMSD(slope)`) %>% 
+    mutate(`Optimisation criterion` = recode(metric,
+                                        LogLoss = "Logarithmic loss",
+                                        CalSlope = "Calibration slope",
+                                        BrierScore = "Brier score",
+                                        CalInt = "Calibration intercept",
+                                        Accuracy = "Classification accuracy",
+                                        Kappa = "Cohen's Kappa"),
+           p = as.integer(p),
+           n_prop = paste0(n_prop, "$N$"),
+           AUC = paste0(format(AUC_mean, nsmall = 2),
+                      " (", format(AUC_sd, nsmall = 2), ")"),
+         `Calibration slope` = paste0(format(Calslope_median, nsmall = 2),
+                                      " (", format(Calslope_IQR, nsmall = 2), ")"),
+         `Runtime (seconds)` = paste0(
+           format(Runtime_mean, nsmall = 2),
+           " (",
+           str_pad(format(Runtime_sd, nsmall = 2, trim = TRUE), ifelse(ef == 0.1, 6, 5), pad = "0"),
+           ")"
+           )) %>% 
+    dplyr::select(`Optimisation criterion`, p, EF, n_prop, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+  colnames(tab)[2:4] <- c("$p$", "$EF$", "$n$")
+  
+  addtorow <- list()
+  addtorow$pos <- list(0)
+  addtorow$command <- paste0(
+    paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+    paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+    '\\\\',
+    "\\multicolumn{1}{c}{}",
+    paste(rep("& \\multicolumn{1}{c}{}", 3), collapse = ""),
+    paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean (SD)"), "}", collapse = ""),
+    '\\\\'
+  )
+  
+  tab %>%
+    xtable(caption = paste0("Average performance of optimisation criteria for each scenario where $EF$ = ", ef, ". Within each scenario, rows are sorted in ascending order of RMSD(slope)."),
+           label = "tab:results2sc",
+           align = c(rep("l", 2), rep("c", 3+3), "r")) %>%
+    print.xtable(include.rownames = FALSE,
+                 caption.placement = "top",
+                 table.placement = "tb",
+                 comment = FALSE,
+                 hline.after = c(-1, seq(0, 28, by = 7)),
+                 #size="\\fontsize{8pt}{8pt}\\selectfont",
+                 # scalebox = "0.9",
+                 sanitize.text.function = keep_latex,
+                 add.to.row = addtorow,
+                 include.colnames = F)
+}
+```
+\end{landscape}
+
+```{r, fig.cap="Calibration plots comparing optimisation criteria for every tenth dataset in scenarios where $EF$ = 0.1.", out.width="100%"}
+knitr::include_graphics("./../Study2/Output/plot_ef1.pdf")
+```
+
+```{r, fig.cap="Calibration plots comparing optimisation criteria for every tenth dataset in scenarios where $EF$ = 0.3.", out.width="100%"}
+knitr::include_graphics("./../Study2/Output/plot_ef3.pdf")
+```
+
+```{r}
+load("./../Study3/Data/results.RData")
+```
+
+\begin{landscape}
+```{r, results='asis'}
+# for (ef in c(0.1, 0.3, 0.5)) {
+  tab <- summary_table_study3_sc %>%
+    # filter(EF == ef) %>%
+    group_by(p, EF, n_prop) %>% 
+    arrange(p, EF, n_prop, Runtime_mean) %>% 
+    mutate(`Search algorithm` = recode(algorithm,
+                                     mbo = "Model-based optimisation",
+                                     grid = "Grid search",
+                                     random = "Random search"),
+           p = as.integer(p),
+           n_prop = paste0(n_prop, "$N$"),
+           AUC = paste0(format(AUC_mean, nsmall = 2),
+                      " (", format(AUC_sd, nsmall = 2), ")"),
+           `Calibration slope` = paste0(format(Calslope_median, nsmall = 2),
+                                      " (", format(Calslope_IQR, nsmall = 2), ")"),
+           `Runtime (seconds)` = paste0(
+             format(Runtime_mean, nsmall = 2),
+             " (",
+             str_pad(format(Runtime_sd, nsmall = 2, trim = TRUE), 6, pad = "0"),
+             ")"
+           )) %>% 
+    dplyr::select(`Search algorithm`, p, EF, n_prop, AUC, `Calibration slope`, `RMSD(slope)`, `Runtime (seconds)`)
+  colnames(tab)[2:4] <- c("$p$", "$EF$", "$n$")
+  
+  addtorow <- list()
+  addtorow$pos <- list(0)
+  addtorow$command <- paste0(
+    paste0("\\multicolumn{1}{c}{", colnames(tab)[1], "}"),
+    paste0("& \\multicolumn{1}{c}{", colnames(tab)[2:ncol(tab)], "}", collapse = ""),
+    '\\\\',
+    "\\multicolumn{1}{c}{}",
+    paste(rep("& \\multicolumn{1}{c}{}", 3), collapse = ""),
+    paste0("& \\multicolumn{1}{c}{", c("Mean (SD)", "Median (IQR)", "", "Mean (SD)"), "}", collapse = ""),
+    '\\\\'
+  )
+  
+  tab %>%
+    xtable(caption = paste0("Average performance of hyperparameter search algorithms for each scenario. Within each scenario, rows are sorted in ascending order of runtime."),
+           label = "tab:results3sc",
+           align = c(rep("l", 2), rep("c", 3+3), "r")) %>%
+    print.xtable(include.rownames = FALSE,
+                 caption.placement = "top",
+                 table.placement = "tb",
+                 comment = FALSE,
+                 hline.after = c(-1, seq(0, 36, by = 3)),
+                 #size="\\fontsize{8pt}{8pt}\\selectfont",
+                 # scalebox = "0.9",
+                 sanitize.text.function = keep_latex,
+                 add.to.row = addtorow,
+                 include.colnames = F)
+# }
+```
+\end{landscape}
+
+```{r, fig.cap="Calibration plots comparing hyperparameter search algorithms for every tenth dataset in scenarios where $EF$ = 0.1.", out.width="100%"}
+knitr::include_graphics("./../Study3/Output/plot_ef1.pdf")
+```
+
+```{r, fig.cap="Calibration plots comparing hyperparameter search algorithms for every tenth dataset in scenarios where $EF$ = 0.3.", out.width="100%"}
+knitr::include_graphics("./../Study3/Output/plot_ef3.pdf")
+```

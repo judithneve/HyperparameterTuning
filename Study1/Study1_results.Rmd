@@ -32,40 +32,51 @@ df <- df %>%
 # Primary data checks
 
 ```{r}
-# check these are the updated data files: the oldest file should not be from before March 14th, 13:00
-list.files(path = "./Data/sim/", pattern = ".rds") %>%
-  paste0("./Data/sim/", .) %>% 
-  file.info() %>% 
-  pull(ctime) %>% 
-  min()
-```
-
-
-```{r}
 # check the number of unique datasets: we expect this to be 6000
 unique(df$start_seed) %>% length()
+```
+
+```{r}
+## during the study, if there were missing datasets due to failures, they were identified in the following way:
+
 # check which ones are missing
 expected_seeds <- c((1:3000)*100 + 8, (1:3000)*100 + 16)
-expected_seeds[!(expected_seeds %in% unique(df$start_seed))] %>% paste(collapse = ", ") # this is what we paste in "failed" to assess if these really would have needed longer to run
-(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor() %>% paste(collapse = ",") # this is what we paste into an sh file
+expected_seeds[!(expected_seeds %in% unique(df$start_seed))] %>% paste(collapse = ", ") # this is what we pasted in "failed" (next chunk) to check how long the rerun took
+(expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100) %>% floor() %>% paste(collapse = ",") # this is what we pasted into an sh file
+```
 
+```{r}
+# vector of seeds that had failed runs
 failed <- c(6416, 7616, 8216, 10016, 19016, 22016, 22616, 23216, 23816, 24416, 25016, 25616, 26216, 26816, 27416, 28016, 28616, 29216, 29816,
             30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
             5216, 9416, 13016, 16616, 20216, 30416, 45416, 47816, 56216, 56816, 58616, 70616, 85616, 86816,
-            93416, 98216, 98816, 103016, 106016, 106616, 107216, 107816, 115016, 119216, 119816, 120416, 133016, 133616, 145616, 148016, 148616, 149216, 149816, 159416, 160616, 165416, 175016, 175616, 176816, 177416, 182216, 184616, 185216, 188216, 188816, 189416, 190016, 191216, 191816, 193016, 193616, 194216, 194816, 195416, 197216, 202616, 209216, 209816, 210416, 214616, 215816, 219416, 220016, 222416, 223016, 223616, 224816, 227216, 229616, 230216, 232016, 232616, 237416, 238016, 238616, 241016, 241616, 242216, 242816, 244616, 245216, 245816, 246416, 247016, 248216, 249416, 251216, 252416, 253016, 253616, 256616, 259016, 260816, 263816, 264416, 271016, 271616, 274616, 275816, 276416, 277616, 278816, 280616, 283016, 283616, 284816, 286616, 287816, 288416, 289616, 290816, 291416, 293216, 293816, 294416, 295616, 296216, 298616, 299216) %>%
+            93416, 98216, 98816, 103016, 106016, 106616, 107216, 107816, 115016, 119216, 119816, 120416, 133016, 133616, 145616, 148016, 148616, 149216, 149816, 159416, 160616, 165416, 175016, 175616, 176816, 177416, 182216, 184616, 185216, 188216, 188816, 189416, 190016, 191216, 191816, 193016, 193616, 194216, 194816, 195416, 197216, 202616, 209216, 209816, 210416, 214616, 215816, 219416, 220016, 222416, 223016, 223616, 224816, 227216, 229616, 230216, 232016, 232616, 237416, 238016, 238616, 241016, 241616, 242216, 242816, 244616, 245216, 245816, 246416, 247016, 248216, 249416, 251216, 252416, 253016, 253616, 256616, 259016, 260816, 263816, 264416, 271016, 271616, 274616, 275816, 276416, 277616, 278816, 280616, 283016, 283616, 284816, 286616, 287816, 288416, 289616, 290816, 291416, 293216, 293816, 294416, 295616, 296216, 298616, 299216, 47216, 49016, 50816, 51416, 55016, 55616, 58016, 61016, 62216, 62816, 63416, 64616, 65216, 65816, 66416, 67016, 68816, 69416, 70016, 71216, 73016, 74216, 76016, 76616, 77216, 77816, 78416, 79016, 79616, 80216, 80816, 82616, 83816, 84416, 85016, 86216, 88616, 89216,
+            14816, 18416, 27416, 15416, 21416, 28016, 14216, 24416, 29816, 41216, 42416, 44816, 32816, 34016, 37616, 40016) %>%
   unique()
+
+failed_1 <- (failed - 16)/100
 ```
 
-
-## Check time it took to rerun failed
-
 ```{r}
-# in hours: is it more than 30:00:00 (the allotted runtime for this study)
-df %>%
+# which scenarios failed?
+failed[(failed %% 100) == 8] # empty vector: none of the 8-predictor ones failed
+
+# how many failed runs?
+failed %>% length()
+# how many failed runs took longer than 30 hours?
+df_failed <- df %>% 
   filter(start_seed %in% failed) %>% 
   group_by(start_seed) %>% 
-  summarise(time = sum(time)/3600) %>% 
-  filter(time > 30)
+  summarise(time = sum(time))
+df_failed %>% 
+  filter(time > 30*60*60) %>% 
+  nrow()
+# longer than 32 hours?
+df_failed_rerun <- df_failed %>% 
+  filter(time > 32*60*60)
+df_failed_rerun %>% 
+  nrow()
+failed_1_re <- (df_failed_rerun$start_seed - 16)/100
 ```
 
 # Plots
@@ -78,7 +89,7 @@ df_scale_setter <- tibble(
   AUC = rep(c(0.5, 1), each = 9),
   BrierScore = rep(c(0, 1), each = 9),
   CalIntercept = rep(c(-1, 1), each = 9),
-  CalSlope = rep(c(0, 5), each = 9),
+  CalSlope = rep(c(0, 2.5), each = 9),
   LogLoss = rep(c(0, 1), each = 9),
   Accuracy = rep(c(0, 1), each = 9),
   CohensKappa = rep(c(0, 1), each = 9),
@@ -181,8 +192,8 @@ plot_sc_met <- df %>%
 # example plot: one scenario, facetted by performance metric
 plot_ex_met <- df %>%
   filter(n_prop == 1,
-         p      == 8,
-         EF     == 0.3) %>% 
+         p      == 16,
+         EF     == 0.5) %>% 
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
@@ -220,8 +231,22 @@ plot_ex_met <- df %>%
 # Summary statistics
 
 ```{r}
-mean_AUC <- df$AUC %>% mean()
-sd_AUC   <- df$AUC %>% sd()
+mean_AUC_splitrule <- df %>% 
+  filter(grepl("splitrule", hp_combination)) %>% 
+  pull(AUC) %>%
+  mean()
+sd_AUC_splitrule   <- df %>% 
+  filter(grepl("splitrule", hp_combination)) %>% 
+  pull(AUC) %>%
+  sd()
+mean_AUC_nosplitrule <- df %>% 
+  filter(!grepl("splitrule", hp_combination)) %>% 
+  pull(AUC) %>%
+  mean()
+sd_AUC_nosplitrule   <- df %>% 
+  filter(!grepl("splitrule", hp_combination)) %>% 
+  pull(AUC) %>%
+  sd()
 ```
 
 ```{r}
@@ -253,87 +278,13 @@ summary_table_study1_sc <- df %>%
             Runtime_sd = round(sd(time), 1))
 ```
 
-# Per scenario tile plots
-
-```{r}
-# outcome plots
-plot_calslope_s1 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, hp_combination) %>% 
-  summarise(calslope = median(CalSlope)) %>% 
-  ggplot(aes(x = scenario, y = hp_combination)) +
-  geom_tile(aes(fill = calslope)) +  ##
-  geom_text(aes(label = round(calslope, 2))) + ##
-  scale_fill_gradient2(low = "white", high = "white", mid = "green", midpoint = 0, trans = "log")  + ## 
-  xlab("Scenario") + 
-  ylab("Hyperparameter combination") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
-plot_auc_s1 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, hp_combination) %>% 
-  summarise(AUC = mean(AUC)) %>% 
-  ggplot(aes(x = scenario, y = hp_combination)) +
-  geom_tile(aes(fill = AUC)) +
-  geom_text(aes(label = round(AUC, 2))) +
-  scale_fill_gradient2(low = "white", high = "green")  +
-  xlab("Scenario") + 
-  ylab("Hyperparameter combination") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
-```
-
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, summary_table_study1, mean_AUC, sd_AUC, summary_table_study1_sc, plot_calslope_s1, plot_auc_s1, file = "Data/results.RData")
-```
-
-
-```{r}
-df_casestudy <- df %>% 
-  filter(p == 16,
-         n_prop == 1,
-         EF == 0.5,
-         hp_combination == "mtry + min.node.size + sample.fraction + replace + splitrule") %>% 
-  mutate(miscal = CalSlope > 2)
-
-set.seed(100)
-rerun <- ((df_casestudy %>% pull(start_seed) %>% sample(250)) - 16)/100
-rerun[1:10] %>% paste(collapse = ",")
-
-badcal <- ((df_casestudy %>% filter(miscal) %>% pull(start_seed)) - 16)/100
-okcal  <- ((df_casestudy %>% filter(!miscal) %>% pull(start_seed)) - 16)/100
-
-paste(c(badcal, okcal), collapse = ",")
+save(plot_ex_met, summary_table_study1, mean_AUC_splitrule, mean_AUC_nosplitrule, sd_AUC_splitrule, sd_AUC_nosplitrule, summary_table_study1_sc, failed_1, failed_1_re, file = "Data/results.RData")
 ```
 
 ```{r}
-df_calsep <- list.files(path = "./Data/calsep/", pattern = ".rds") %>%
-  paste0("./Data/calsep/", .) %>% 
-  # file.info()
-  map(readRDS) %>% 
-  # mutate(splitrule = as.character(splitrule)) %>% 
-  bind_rows()
-```
 
-```{r}
-df <- df %>% 
-  filter(start_seed %in% unique(df_calsep$start_seed))
-```
-
-```{r}
-df_calsep %>% 
-  filter(hp_combination %in% c("mtry + min.node.size + sample.fraction + replace + splitrule", "mtry + min.node.size + sample.fraction + splitrule", "mtry + min.node.size + splitrule", "mtry + min.node.size + replace + splitrule")) %>% 
-  ggplot(aes(x = time, y = CalSlope, col = factor(splitrule))) +
-  geom_point() +
-  theme_classic() +
-  facet_wrap(~ hp_combination, scales = "free")
 ```
 

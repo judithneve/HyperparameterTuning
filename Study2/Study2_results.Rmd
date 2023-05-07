@@ -18,6 +18,7 @@ df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
   paste0("./Data/sim/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
+  filter(metric != "Deviance") %>% 
   mutate(time = time*60) # convert the runtime to seconds
 ```
 
@@ -32,16 +33,21 @@ expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100
 # 788 failed
 failed <- c(788) %>%
   unique()
+
+failed_2 <- failed
 ```
 
-## Check time it took to rerun failed
-
 ```{r}
-# in hours: is it more than 3:30:00 (the allotted runtime for this study)
-df %>%
-  filter(start_seed %in% failed) %>% 
+# how many failed runs?
+failed %>% length()
+# how many failed runs took longer than 3:30 hours?
+df_failed <- df %>% 
+  filter(start_seed %in% (failed*100)) %>% 
   group_by(start_seed) %>% 
-  summarise(time = sum(time)/3600)
+  summarise(time = sum(time))
+df_failed %>% 
+  filter(time > 3.5*60*60) %>% 
+  nrow()
 ```
 
 # Plots
@@ -51,13 +57,13 @@ df %>%
 ```{r scale setting}
 # set the min and max value for the y-axis of each facet
 df_scale_setter <- tibble(
-  AUC = rep(c(0.5, 1), each = 8),
-  BrierScore = rep(c(0, 1), each = 8),
-  CalIntercept = rep(c(-1, 1), each = 8),
-  CalSlope = rep(c(0, 2.5), each = 8),
-  LogLoss = rep(c(0, 1), each = 8),
-  Accuracy = rep(c(0, 1), each = 8),
-  CohensKappa = rep(c(0, 1), each = 8),
+  AUC = rep(c(0.5, 1), each = 7),
+  BrierScore = rep(c(0, 1), each = 7),
+  CalIntercept = rep(c(-1, 1), each = 7),
+  CalSlope = rep(c(0, 2.5), each = 7),
+  LogLoss = rep(c(0, 1), each = 7),
+  Accuracy = rep(c(0, 1), each = 7),
+  CohensKappa = rep(c(0, 1), each = 7),
   time = 0,
   metric = rep(unique(df$metric), 2)
 ) %>%
@@ -102,13 +108,13 @@ df_timelimits <- expand.grid(
 ## performance metric
 Metric.labs <- paste("Performance metric:\n", c("calibration slope", "calibration intercept", "Brier score", "logarithmic loss", "AUC", "classification accuracy", "Cohen's Kappa"))
 names(Metric.labs) <- c("CalSlope", "CalIntercept", "BrierScore", "LogLoss", "AUC", "Accuracy", "CohensKappa")
-## optimisation metric
-opt.labs <- c("CalSlope", "CalInt", "BrierScore", "LogLoss", "AUC", "Accuracy", "Kappa", "Deviance")
-names(opt.labs) <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa", "Deviance")
-opt.labs <- opt.labs[c(8, 5, 4, 6, 7, 3, 2, 1)]
+## Optimisation criterion
+opt.labs <- c("CalSlope", "CalInt", "BrierScore", "LogLoss", "AUC", "Accuracy", "Kappa")
+names(opt.labs) <- c("Calibration slope", "Calibration intercept", "Brier score", "Logarithmic loss", "AUC", "Classification accuracy", "Cohen's Kappa")
+opt.labs <- opt.labs[c(4, 5, 6, 7, 3, 2, 1)]
 
 # define the colour palettes
-metric_pal <- viridis::plasma(n = 8)
+metric_pal <- viridis::plasma(n = 7)
 # c("#b9dd56","#98544c","#57829b","#6d8640","#ffb58a","#979265","#67f3a7","#3fbb2b")
 same_pal <- viridis::cividis(2)
 ```
@@ -150,8 +156,8 @@ plot_sc_met <- df %>%
                      labels = opt.labs,
                      values = rep(16, 8)) +
   labs(x = "Runtime (seconds)",
-       col = "Optimisation metric",
-       shape = "Optimisation metric")
+       col = "Optimisation criterion",
+       shape = "Optimisation criterion")
 
 # ggsave("PilotPlot.png", plot_sc_met, width = 20, height = 40, units = "in")
 ```
@@ -160,8 +166,8 @@ plot_sc_met <- df %>%
 # example plot: one scenario, facetted by performance metric
 plot_ex_met <- df %>%
   filter(n_prop == 1,
-         p      == 8,
-         EF     == 0.3) %>% 
+         p      == 16,
+         EF     == 0.5) %>% 
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
@@ -191,16 +197,23 @@ plot_ex_met <- df %>%
                      labels = names(opt.labs),
                      values = rep(16, 8)) +
   labs(x = "Runtime (seconds)",
-       col = "Optimisation metric",
-       shape = "Optimisation metric")
+       col = "Optimisation criterion",
+       shape = "Optimisation criterion")
 ```
 
+
 ```{r}
-# example plot: one scenario, facetted by performance metric - coloured by whether the performance and optimisation metrics are the same
+# example plot: one scenario, facetted by performance metric - coloured by whether the performance and Optimisation criterions are the same
+x.labs <- opt.labs
+x.labs["Cohen's Kappa"] <- "CohensKappa"
+x.labs["Calibration intercept"] <- "CalIntercept"
+
 plot_ex_same <- df %>%
-  filter(n_prop == 1,
-         p      == 8,
-         EF     == 0.3) %>% 
+  # group_by(n_prop, p, EF) %>% 
+  # mutate(scenario = paste(n_prop, p, EF)) %>% 
+  # filter(n_prop == 1,
+  #        p      == 16,
+  #        EF     == 0.5) %>% 
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
@@ -209,15 +222,15 @@ plot_ex_same <- df %>%
          metric_st = recode(metric,
                             CalInt = "CalIntercept",
                             Kappa  = "CohensKappa"), 
-         Same = ifelse(Metric == metric_st, T, F)) %>% # NOTE: wrong for calint and kappa
-  ggplot(aes(x = time,
-             y = Performance,
-             group = metric)) +
-  geom_point(aes(col = Same,
-                 shape = Same),
-             alpha = 0.75) +
+         Same = ifelse(Metric == metric_st, metric_st, "Other metrics") %>% 
+           factor(levels = c("Other metrics", x.labs),
+                  labels = c("Other metrics", names(x.labs)))) %>%
+  ggplot(aes(x = Same,
+             y = Performance)) +
+  geom_boxplot() +
+  coord_flip() +
   # xlim(0, max(df$time)) +
-  geom_point(data = df_scale_setter, alpha = 0) +
+  # geom_point(data = df_scale_setter, alpha = 0) +
   # geom_point(data = df_timelimits, alpha = 0) +
   geom_hline(data = df_targets, aes(yintercept = Target), col = "red", lty = "dotted") +
   facet_wrap(~ Metric,
@@ -231,17 +244,17 @@ plot_ex_same <- df %>%
         legend.background = element_rect(),
         panel.spacing = unit(1.2, "lines"),
         plot.caption = element_text(hjust = 0)) +
-  scale_color_manual(breaks = c(T, F),
-                     labels = c("Same optimisation and performance metric",
-                                "Different optimisation and performance metric"),
-                     values = same_pal) +
-  scale_shape_manual(breaks = c(T, F),
-                     labels = c("Same optimisation and performance metric",
-                                "Different optimisation and performance metric"),
-                     values = c(16, 1)) +
-  labs(x = "Runtime (seconds)",
-       col = "Optimisation metric",
-       shape = "Optimisation metric")
+  # scale_color_manual(breaks = c(T, F),
+  #                    labels = c("Same optimisation and performance metric",
+  #                               "Different optimisation and performance metric"),
+  #                    values = same_pal) +
+  # scale_shape_manual(breaks = c(T, F),
+  #                    labels = c("Same optimisation and performance metric",
+  #                               "Different optimisation and performance metric"),
+  #                    values = c(16, 1)) +
+  labs(x = "Optimisation criterion")
+
+# ggsave("PilotPlot_box.png", plot_ex_same, width = 20, height = 40, units = "in")
 ```
 
 
@@ -249,8 +262,10 @@ plot_ex_same <- df %>%
 
 ```{r}
 # overall AUC
-mean_AUC <- df$AUC %>% mean()
-sd_AUC   <- df$AUC %>% sd()
+mean_runtime <- df$time %>% mean()
+sd_runtime   <- df$time %>% sd()
+mean_runtime_sc <- df %>% group_by(n_prop, p, EF) %>% summarise(mean = mean(time),
+                                                             sd = sd(time))
 ```
 
 ```{r}
@@ -283,44 +298,14 @@ summary_table_study2_sc <- df %>%
             Runtime_sd = round(sd(time), 1))
 ```
 
-# Per scenario tile plots
-
-```{r}
-# outcome plots
-plot_calslope_s2 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, metric) %>% 
-  summarise(calslope = median(CalSlope)) %>% 
-  ggplot(aes(x = scenario, y = metric)) +
-  geom_tile(aes(fill = calslope)) +  ##
-  geom_text(aes(label = round(calslope, 2))) + ##
-  scale_fill_gradient2(low = "white", high = "white", mid = "green", midpoint = 0, trans = "log")  + ## 
-  xlab("Scenario") + 
-  ylab("Optimisation metric") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
-plot_auc_s2 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, metric) %>% 
-  summarise(AUC = mean(AUC)) %>% 
-  ggplot(aes(x = scenario, y = metric)) +
-  geom_tile(aes(fill = AUC)) +
-  geom_text(aes(label = round(AUC, 2))) +
-  scale_fill_gradient2(low = "white", high = "green")  +
-  xlab("Scenario") + 
-  ylab("Optimisation metric") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
-```
-
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, plot_ex_same, summary_table_study2, mean_AUC, sd_AUC, summary_table_study2_sc, plot_calslope_s2, plot_auc_s2, file = "Data/results.RData")
+save(plot_ex_met, plot_ex_same, summary_table_study2, mean_runtime, sd_runtime, mean_runtime_sc, summary_table_study2_sc, failed_2, file = "Data/results.RData")
 ```
+
+
+```{r}
+
+```
+

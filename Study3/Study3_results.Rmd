@@ -32,6 +32,16 @@ expected_seeds <- (1:600)*100 + 50
 # 80 failed twice
 failed <- c(80,296,380,476,524,560,584) %>%
   unique()
+failed_3 <- failed
+failed %>% length()
+# how many failed runs took longer than 3:30 hours?
+df_failed <- df %>% 
+  filter(start_seed %in% (failed*100 + 50)) %>% 
+  group_by(start_seed) %>% 
+  summarise(time = sum(time))
+df_failed %>% 
+  filter(time > 6*60*60) %>% 
+  nrow()
 ```
 
 ```{r}
@@ -157,8 +167,8 @@ plot_sc_met <- df %>%
 # example plot: two scenarios, facetted by performance metric
 plot_ex_met <- df %>%
   filter(n_prop == 1,
-         p      == 8,
-         EF     == 0.3) %>% 
+         p      == 16,
+         EF     == 0.5) %>% 
   pivot_longer(AUC:CohensKappa,
                names_to = "Metric",
                values_to = "Performance") %>%
@@ -229,8 +239,8 @@ summary_table_study3 <- df %>%
             Calslope_IQR = round(IQR(CalSlope), 2),
             #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
             `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
-            Runtime_mean = round(mean(time), 1),
-            Runtime_sd = round(sd(time), 1)) %>% 
+            Runtime_mean = round(mean(time), 2),
+            Runtime_sd = round(sd(time), 2)) %>% 
   arrange(`RMSD(slope)`)
 ```
 
@@ -245,48 +255,26 @@ summary_table_study3_sc <- df %>%
             Calslope_IQR = round(IQR(CalSlope), 2),
             #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
             `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
-            Runtime_mean = round(mean(time), 1),
-            Runtime_sd = round(sd(time), 1))
+            Runtime_mean = round(mean(time), 2),
+            Runtime_sd = round(sd(time), 2))
 ```
 
-# Per scenario tile plots
-
 ```{r}
-# outcome plots
-plot_calslope_s3 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, algorithm) %>% 
-  summarise(calslope = median(CalSlope)) %>% 
-  ggplot(aes(x = scenario, y = algorithm)) +
-  geom_tile(aes(fill = calslope)) +  ##
-  geom_text(aes(label = round(calslope, 2))) + ##
-  scale_fill_gradient2(low = "white", high = "white", mid = "green", midpoint = 0, trans = "log")  + ## 
-  xlab("Scenario") + 
-  ylab("Hyperparameter search algorithm") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
-plot_auc_s3 <- df %>%
-  mutate(scenario = paste(n_prop, p, EF)) %>% 
-  group_by(scenario, algorithm) %>% 
-  summarise(AUC = mean(AUC)) %>% 
-  ggplot(aes(x = scenario, y = algorithm)) +
-  geom_tile(aes(fill = AUC)) +
-  geom_text(aes(label = round(AUC, 2))) +
-  scale_fill_gradient2(low = "white", high = "green")  +
-  xlab("Scenario") + 
-  ylab("Hyperparameter search algorithm") + 
-  theme(panel.grid.major.x=element_blank(),
-        panel.grid.minor.x=element_blank(), 
-        panel.grid.major.y=element_blank(), 
-        panel.grid.minor.y=element_blank(), 
-        panel.background=element_rect(fill="white"))
+# when we double the sample size, the computational time increases by a factor of...
+proportion_increase <- summary_table_study3_sc %>%
+  select(n_prop, Runtime_mean, Runtime_sd, algorithm, p, EF) %>%
+  pivot_wider(values_from = c("Runtime_mean", "Runtime_sd"), names_from = "n_prop") %>%
+  mutate(prop_diff = Runtime_mean_1/Runtime_mean_0.5) %>%
+  arrange(prop_diff)
 ```
 
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, summary_table_study3, mean_AUC, sd_AUC, summary_table_study3_sc, plot_calslope_s3, plot_auc_s3, per_scenario_runtime, file = "Data/results.RData")
+save(plot_ex_met, summary_table_study3, mean_AUC, sd_AUC, summary_table_study3_sc, per_scenario_runtime, proportion_increase, failed_3, file = "Data/results.RData")
 ```
+
+```{r}
+
+```
+
