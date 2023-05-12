@@ -30,14 +30,14 @@ N  <- c(0.5, 1)
 ```
 
 ```{r}
-source("./../RFunctions/DGMFunctions.R")
-source("DataSimFunctions.R")
+source("RCode/DGMFunctions.R")
+source("./../RFunctions/DataSimFunctions.R")
 ```
 
 ```{r}
 set.seed(0070661)
 scenarios <- make_scenarios(n_pred = p, event_fraction = EF, sample_size = N)
-save(scenarios, file = "DGM_data/scenarios.RData")
+save(scenarios, file = "Data/scenarios.RData")
 set.seed(NULL)
 ```
 
@@ -74,7 +74,7 @@ betas_matrix <- beta_valid_df %>%
   arrange(n_predictor, prevalence) %>%
   as.matrix()
 
-save(betas_matrix, file = "DGM_data/betas.RData")
+save(betas_matrix, file = "Data/betas.RData")
 ```
 
 
@@ -95,7 +95,7 @@ cat("\nMax. difference between total main effects and total interaction effects:
 set.seed(4*start_seed)
 beta_estimations <- recover_betas(betas_matrix)
 
-save(beta_estimations, validation_betas_matrix, file = "DGM_data/betas_validation.RData")
+save(beta_estimations, validation_betas_matrix, file = "Data/betas_validation.RData")
 ```
 
 # Estimands
@@ -105,7 +105,7 @@ Predictive performance and computational time.
 # Session info
 
 ```{r}
-writeLines(capture.output(sessionInfo()), "DGM_scenarios_betas_sessionInfo.txt")
+writeLines(capture.output(sessionInfo()), "Output/DGM_scenarios_betas_sessionInfo.txt")
 ```
 
 
