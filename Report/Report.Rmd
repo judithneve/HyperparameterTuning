@@ -70,7 +70,7 @@ Yang and Shami [@yang_hyperparameter_2020] showed important differences in compu
 All studies used the same data-generating mechanism. Datasets were generated separately for each study. A full factorial simulation design was used to evaluate the influence of data generating characteristics on the variations in model predictive performance and computational time. The outcome was a binary variable with classes "positive" and "negative". The varying simulation factors were the number of predictor variables $p$ (range: 8, 16), the proportion of observations that had "positive" as their outcome (hereafter called "event fraction") $EF$ (range: 0.1, 0.3, 0.5), and the sample size $n$ (range: $0.5N$, $1N$). $N$ is the minimum sample size required to identify effects for a given number of regression coefficients (here, 1.25$p$), expected event fraction, and expected AUC (here, 0.8), as calculated by Riley and colleagues [@riley_calculating_2020]. A total of 12 (2\*3\*2) scenarios were considered. For each scenario, 500 training datasets and 500 validation datasets were generated per study, yielding a total of 6,000 observations per study. Scenario sample sizes are detailed in Table \ref{tab:scenarios}.
 
 ```{r, results = "asis"}
-load("./../DGM_data/scenarios.RData")
+load("./../DGM/Data/scenarios.RData")
 colnames(scenarios) <- c("$p$", "$EF$", "prop", "$n$")
 scenarios[nrow(scenarios) + 1:30,] <- NA # to make the table larger so it only prints one table per page
 
@@ -217,7 +217,7 @@ Results were often consistent across different values of number of predictor var
 ## Study 1: Selecting hyperparameters
 
 ```{r}
-load("./../Study1/Data/results.RData")
+load("./../Study1/Output/results.RData")
 ```
 
 The results of primary outcomes for each hyperparameter combination are summarised in Table \ref{tab:results1}. Simulation scenario-specific summary statistics are presented in Tables S2-S4 in the supplementary materials. Effects did not meaningfully vary between different values for number of predictors, event fraction, or sample size. We illustrate results specific to the scenario where $p = 16$, $EF = 0.5$, and $n = 1N$ in Figure \ref{fig:study1fig}. Calibration plots for all scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s1calplot}. Calibration plots for other scenarios can be found in the supplementary materials (Figures S1 and S2).
@@ -284,7 +284,7 @@ knitr::include_graphics("./../Study1/Output/plot_ef5.pdf")
 ## Study 2: Optimisation criterion
 
 ```{r}
-load("./../Study2/Data/results.RData")
+load("./../Study2/Output/results.RData")
 ```
 
 Based on Study 1, we tuned `mtry` and `min.node.size` as they were found to be optimal in terms of computational time with similar or better predictive performance compared to other sets of hyperparameters. The results of primary outcomes for each optimisation criterion are summarised in Table \ref{tab:results2}. Simulation scenario-specific summary statistics are presented in Tables S5-S7 in the supplementary materials. The effect of optimisation criterion did not meaningfully vary between different values for number of predictors, event fraction, or sample size. We illustrate results specific to the scenario where $p = 16$, $EF = 0.5$, and $n = 1N$ in Figure \ref{fig:study2fig}. Calibration plots for all scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s2calplot}. Calibration plots for other scenarios can be found in the supplementary materials (Figures S3 and S4).
@@ -358,7 +358,7 @@ plot_ex_same
 ## Study 3: Hyperparameter search algorithms
 
 ```{r}
-load("./../Study3/Data/results.RData")
+load("./../Study3/Output/results.RData")
 ```
 
 Based on Studies 1 and 2, we tuned `mtry` and `min.node.size`, minimising logarithmic loss. The results of primary outcomes for each search algorithm are presented in Table \ref{tab:results3}. Effects on predictive performance did not meaningfully vary between different values for number of predictors, event fraction, or sample size. Simulation scenario-specific summary statistics are presented in Table S8 in the supplementary materials. We illustrate results specific to the scenario where $p = 16$, $EF = 0.5$, and $n = 1N$ in Figure \ref{fig:study3fig}. Calibration plots for all scenarios where $EF = 0.5$ are presented in Figure \ref{fig:s3calplot}. Calibration plots for other scenarios can be found in the supplementary materials (Figures S5 and S6).
@@ -499,7 +499,7 @@ Random forests are widely used in clinical research [@uddin_comparing_2019;@anda
 True effects were determined for each unique combination of $p$ and $EF$. Let $k$ denote a given combination. For each combination, the intercept $\beta_0^{(k)}$, predictor main effects $\boldsymbol\beta^{(k)}$, and predictor interaction effects $\boldsymbol\gamma^{(k)}$ were estimated using a large sample approximation ($n = 100,000$) [@van_smeden_sample_2019]. The first $p/2$ main effects were set to be equal (i.e., $\beta_1^{(k)} = \beta_2^{(k)} = ... = \beta_{p/2}^{(k)}$). The next $p/4$ main effects were set to be twice the strength of the first $p/2$ main effects (i.e., $\beta_{p/2+1}^{(k)} = \beta_{p/2+2}^{(k)} = ... = \beta_{3p/4}^{(k)} = 2\beta_1^{(k)}$). The final $p/4$ main effects were set to 0. All interaction effects $\boldsymbol\gamma^{(k)}$ were set to be equal (i.e., $\gamma_1^{(k)} = \gamma_2^{(k)} = ... = \gamma_{0.25p}^{(k)}$). The R function `optim` was used to minimise a loss function measuring the sum of the squared difference between (i) 0.7 and the observed AUC in a model with no interactions, (ii) 0.8 and the observed AUC in a model with interactions, and (iii) the targeted event fraction and the average estimated probability $P(y_i = 1|\mathbf{x}_i)$ in the simulated dataset. This was repeated 20 times for each scenario. Each generated set of true effects was used to generate a dataset of $n = 100,000$, on which the AUC (with and without interaction) and prevalence were measured. For each scenario, the true effect was selected to be the set of effects with the smallest sum of absolute differences between (i) target prevalence and observed prevalence, (ii) 0.7 and the AUC of a model with no interactions, and (iii) 0.8 and the AUC of a model with interactions. True effects' performances were assessed by generating a new dataset and measuring AUC and prevalence (Table \ref{tab:betastable}).
 
 ```{r}
-load("./../DGM_data/betas_validation.RData")
+load("./../DGM/Data/betas_validation.RData")
 ```
 
 ```{r, results='asis'}

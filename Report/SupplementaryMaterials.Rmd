@@ -44,27 +44,21 @@ keep_latex <- function(x) {
 ```
 
 ```{r}
-load("./../Study1/Data/results.RData")
+load("./../Study1/Output/results.RData")
+load("./../Study2/Output/results.RData")
+load("./../Study3/Output/results.RData")
 ```
 
 Timed out runs for Study 1 (16 predictor scenarios): `r paste(failed_1 %>% sort(), collapse = ", ")`
 
 Timed out reruns for Study 1 (16 predictor scenarios): `r paste(failed_1_re %>% sort(), collapse = ", ")`
 
-```{r}
-load("./../Study2/Data/results.RData")
-```
-
 Timed out runs for Study 2: `r paste(failed_2 %>% sort(), collapse = ", ")`
-
-```{r}
-load("./../Study3/Data/results.RData")
-```
 
 Timed out runs for Study 3: `r paste(failed_3 %>% sort(), collapse = ", ")`
 
 ```{r}
-load("./../Study1/Data/results.RData")
+load("./../Study1/Output/results.RData")
 ```
 
 \begin{landscape}
@@ -129,7 +123,7 @@ knitr::include_graphics("./../Study1/Output/plot_ef3.pdf")
 ```
 
 ```{r}
-load("./../Study2/Data/results.RData")
+load("./../Study2/Output/results.RData")
 ```
 
 \begin{landscape}
@@ -200,7 +194,7 @@ knitr::include_graphics("./../Study2/Output/plot_ef3.pdf")
 ```
 
 ```{r}
-load("./../Study3/Data/results.RData")
+load("./../Study3/Output/results.RData")
 ```
 
 \begin{landscape}
