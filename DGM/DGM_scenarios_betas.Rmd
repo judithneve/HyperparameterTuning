@@ -30,7 +30,7 @@ N  <- c(0.5, 1)
 ```
 
 ```{r}
-source("DGMFunctions.R")
+source("./../RFunctions/DGMFunctions.R")
 source("DataSimFunctions.R")
 ```
 
