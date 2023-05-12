@@ -105,7 +105,7 @@ Predictive performance and computational time.
 # Session info
 
 ```{r}
-writeLines(capture.output(sessionInfo()), "Output/DGM_scenarios_betas_sessionInfo.txt")
+writeLines(capture.output(sessionInfo()), "DGM_scenarios_betas_sessionInfo.txt")
 ```
 
 
