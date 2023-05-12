@@ -1,3 +1,9 @@
+# this file is run through an .sh file
+# one run of the file generates one observation
+
+# two arguments are given in the sh file:
+# - a job id, used to set the seed
+# - the number of predictors
 job_args <- commandArgs(trailingOnly=TRUE)
 print(job_args)
 
@@ -8,9 +14,9 @@ library(ranger)  # random forests
 library(caret)   # tuning
 library(pROC)    # AUC calculations
 library(psych)   # cohen's kappa
-source("DataSimFunctions.R")
-source("TuningFunctions.R")
-source("PerformanceMetricsFunctions.R")
+source("RFunctions/DataSimFunctions.R")
+source("RFunctions/TuningFunctions.R")
+source("RFunctions/PerformanceMetricsFunctions.R")
 
 job_id <- job_args[1] %>% as.numeric()
 p      <- job_args[2] %>% as.numeric()
@@ -19,10 +25,10 @@ start_seed <- job_id*100 + p
 set.seed(start_seed)
 
 # load in scenario + coef
-load("DGM_data/scenarios.RData")
+load("DGM/Data/scenarios.RData")
 scenarios <- scenarios %>%
   filter(n_pred == p)
-load("DGM_data/betas.RData")
+load("DGM/Data/betas.RData")
 
 selected_scenario <- ifelse(job_id %% 6 == 0, 6, job_id %% 6)
 
@@ -168,7 +174,7 @@ for (combination in 1:nrow(hyperparameter_combinations)) {
 
 ##### Save #####
 
-filename <- paste0("Study1/Data/sim/study1_onescenario_run", job_id, "_", p, ".rds")
+filename <- paste0("Study1/Data/perfs/study1_onescenario_run", job_id, "_", p, ".rds")
 saveRDS(out, file = filename)
 
 if ((ceiling(job_id / 6) %% 10) == 0) {

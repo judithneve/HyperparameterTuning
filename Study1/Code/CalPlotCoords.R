@@ -1,3 +1,10 @@
+# this file is run through an .sh file
+# one run of the file generates coordinates for the calibration plots for 20 datasets
+
+# two arguments are given in the sh file:
+# - a job id, used to set the seed
+# - the number of predictors
+
 job_args <- commandArgs(trailingOnly=TRUE)
 print(job_args)
 
@@ -26,7 +33,7 @@ loess_regression <- function(dataframe){
   return(out)
 }
 
-load("DGM_data/scenarios.RData")
+load("DGM/Data/scenarios.RData")
 scenarios <- scenarios %>% 
   filter(n_pred == p) %>% 
   mutate(sc = 1:6)
@@ -70,6 +77,6 @@ for (pred in predictions) {
   row <- row + nrow(temp)
 }
 
-file_path <- paste0("./Study3/Data/coords/study3_ef", ef_id, "_pred", p, "_batch", run, ".rds")
+file_path <- paste0("./Study1/Data/coords/study1_ef", ef_id, "_pred", p, "_batch", run, ".rds")
 saveRDS(coords, file = file_path)
 
