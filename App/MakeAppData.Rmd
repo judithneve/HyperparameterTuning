@@ -11,8 +11,8 @@ library(tidyverse)
 ```
 
 ```{r}
-df1 <- list.files(path = "./../Study1/Data/sim/", pattern = ".rds") %>%
-  paste0("./../Study1/Data/sim/", .) %>% 
+df1 <- list.files(path = "./../Study1/Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Study1/Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
   mutate(hp_combination =
@@ -30,8 +30,8 @@ df1 <- list.files(path = "./../Study1/Data/sim/", pattern = ".rds") %>%
          scenario = factor(paste0("p = ", p, ", EF = ", EF, ", n = ", n_prop, "N")),
          variable = hp_combination)
 
-df2 <- list.files(path = "./../Study2/Data/sim/", pattern = ".rds") %>%
-  paste0("./../Study2/Data/sim/", .) %>% 
+df2 <- list.files(path = "./../Study2/Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Study2/Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
   filter(metric != "Deviance") %>% 
@@ -45,8 +45,8 @@ df2 <- list.files(path = "./../Study2/Data/sim/", pattern = ".rds") %>%
          scenario = factor(paste0("p = ", p, ", EF = ", EF, ", n = ", n_prop, "N")),
          variable = metric)
 
-df3 <- list.files(path = "./../Study3/Data/sim/", pattern = ".rds") %>%
-  paste0("./../Study3/Data/sim/", .) %>% 
+df3 <- list.files(path = "./../Study3/Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Study3/Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
   mutate(time = time*60) %>% 
