@@ -1,5 +1,5 @@
 ---
-title: "Sneak peek at results"
+title: "Results study 1"
 author: "Judith Neve"
 date: '2023-02-26'
 output: html_document
@@ -14,8 +14,8 @@ library(tidyverse)
 
 ```{r}
 # read all the files into a dataframe
-df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
-  paste0("./Data/sim/", .) %>% 
+df <- list.files(path = "./../Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows()
 
@@ -151,6 +151,7 @@ HPcomb_pal <- viridis::turbo(n = 9)
 
 ```{r scenario by metric}
 # full plot: facet by scenario and metric
+# this is not saved - not in the report - can be seen in the shiny app or run here
 plot_sc_met <- df %>%
   group_by(n_prop, p, EF) %>% 
   mutate(scenario = paste(n_prop, p, EF)) %>% 
@@ -281,10 +282,6 @@ summary_table_study1_sc <- df %>%
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, summary_table_study1, mean_AUC_splitrule, mean_AUC_nosplitrule, sd_AUC_splitrule, sd_AUC_nosplitrule, summary_table_study1_sc, failed_1, failed_1_re, file = "Data/results.RData")
-```
-
-```{r}
-
+save(plot_ex_met, summary_table_study1, mean_AUC_splitrule, mean_AUC_nosplitrule, sd_AUC_splitrule, sd_AUC_nosplitrule, summary_table_study1_sc, failed_1, failed_1_re, file = "./../Output/results.RData")
 ```
 
