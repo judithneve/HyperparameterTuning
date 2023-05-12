@@ -21,7 +21,7 @@ loess_regression <- function(dataframe){
   return(out)
 }
 
-load("DGM_data/scenarios.RData")
+load("DGM/Data/scenarios.RData")
 scenarios <- scenarios %>% 
   mutate(sc = 1:12)
 

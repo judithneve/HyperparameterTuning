@@ -14,8 +14,8 @@ library(tidyverse)
 
 ```{r}
 # read all the files into a dataframe
-df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
-  paste0("./Data/sim/", .) %>% 
+df <- list.files(path = "./../Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
   mutate(time = time*60) # convert the runtime to seconds
@@ -123,6 +123,7 @@ alg_pal <- viridis::viridis(n = 3)
 
 ```{r scenario by metric}
 # full plot: facet by scenario and algorithm
+# this is not saved - not in the report - can be seen in the shiny app or run here
 plot_sc_met <- df %>%
   group_by(n_prop, p, EF) %>% 
   mutate(scenario = paste(n_prop, p, EF)) %>% 
@@ -271,10 +272,6 @@ proportion_increase <- summary_table_study3_sc %>%
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, summary_table_study3, mean_AUC, sd_AUC, summary_table_study3_sc, per_scenario_runtime, proportion_increase, failed_3, file = "Data/results.RData")
-```
-
-```{r}
-
+save(plot_ex_met, summary_table_study3, mean_AUC, sd_AUC, summary_table_study3_sc, per_scenario_runtime, proportion_increase, failed_3, file = "./../Output/results.RData")
 ```
 

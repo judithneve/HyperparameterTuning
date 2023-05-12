@@ -33,6 +33,7 @@ expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100
 # 788 failed
 failed <- c(788) %>%
   unique()
+failed_2 <- failed
 ```
 
 ```{r}
@@ -300,6 +301,6 @@ summary_table_study2_sc <- df %>%
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, plot_ex_same, summary_table_study2, mean_runtime, sd_runtime, mean_runtime_sc, summary_table_study2_sc, failed, file = "./../Output/results.RData")
+save(plot_ex_met, plot_ex_same, summary_table_study2, mean_runtime, sd_runtime, mean_runtime_sc, summary_table_study2_sc, failed_2, file = "./../Output/results.RData")
 ```
 

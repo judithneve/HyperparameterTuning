@@ -1,3 +1,6 @@
+# this file is run through an .sh file
+# one run of the file generates ten observations (together in a single data frame)
+
 job_args <- commandArgs(trailingOnly=TRUE)
 print(job_args)
 
@@ -10,9 +13,9 @@ library(psych)
 library(tuneRanger)
 library(caret)        # tuning: grid search + random search
 library(simsalapar)   # error catching
-source("DataSimFunctions.R")
-source("PerformanceMetricsFunctions.R")
-source("TuningFunctions.R")
+source("RFunctions/DataSimFunctions.R")
+source("RFunctions/PerformanceMetricsFunctions.R")
+source("RFunctions/TuningFunctions.R")
 # # object to optimise deviance
 # deviance_mbo <- makeMeasure(
 #   "deviance_mbo",
@@ -37,8 +40,8 @@ start_seed <- job_id*100 + 50
 set.seed(start_seed)
 
 # load in scenario + coef
-load("DGM_data/scenarios.RData")
-load("DGM_data/betas.RData")
+load("DGM/Data/scenarios.RData")
+load("DGM/Data/betas.RData")
 
 selected_scenario <- ifelse(job_id %% 12 == 0, 12, job_id %% 12)
 
@@ -228,7 +231,7 @@ for (run in 1:n_runs) {
 
 ##### Save #####
 
-filename <- paste0("Study3/Data/sim/study3_run", job_id, ".rds")
+filename <- paste0("Study3/Data/perfs/study3_run", job_id, ".rds")
 saveRDS(out, file = filename)
 
 filename_pred <- paste0("Study3/Data/preds/study3_preds_run", job_id, ".rds")
