@@ -14,11 +14,11 @@ library(tidyverse)
 
 ```{r}
 # read all the files into a dataframe
-df <- list.files(path = "./Data/sim/", pattern = ".rds") %>%
-  paste0("./Data/sim/", .) %>% 
+df <- list.files(path = "./../Data/perfs/", pattern = ".rds") %>%
+  paste0("./../Data/perfs/", .) %>% 
   map(readRDS) %>% 
   bind_rows() %>% 
-  filter(metric != "Deviance") %>% 
+  filter(metric != "Deviance") %>% # deviance and logloss are equivalent
   mutate(time = time*60) # convert the runtime to seconds
 ```
 
@@ -33,8 +33,6 @@ expected_seeds[!(expected_seeds %in% unique(df$start_seed))]/100
 # 788 failed
 failed <- c(788) %>%
   unique()
-
-failed_2 <- failed
 ```
 
 ```{r}
@@ -123,6 +121,7 @@ same_pal <- viridis::cividis(2)
 
 ```{r scenario by metric}
 # full plot: facet by scenario and metric
+# this is not saved - not in the report - can be seen in the shiny app or run here
 plot_sc_met <- df %>%
   group_by(n_prop, p, EF) %>% 
   mutate(scenario = paste(n_prop, p, EF)) %>% 
@@ -301,11 +300,6 @@ summary_table_study2_sc <- df %>%
 # Save the relevant plots and figures
 
 ```{r}
-save(plot_ex_met, plot_ex_same, summary_table_study2, mean_runtime, sd_runtime, mean_runtime_sc, summary_table_study2_sc, failed_2, file = "Data/results.RData")
-```
-
-
-```{r}
-
+save(plot_ex_met, plot_ex_same, summary_table_study2, mean_runtime, sd_runtime, mean_runtime_sc, summary_table_study2_sc, failed, file = "./../Output/results.RData")
 ```
 

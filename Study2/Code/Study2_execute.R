@@ -1,3 +1,6 @@
+# this file is run through an .sh file
+# one run of the file generates one observation
+
 job_args <- commandArgs(trailingOnly=TRUE)
 print(job_args)
 
@@ -8,9 +11,9 @@ library(ranger)  # random forests
 library(caret)   # tuning
 library(pROC)    # AUC calculations
 library(psych)
-source("DataSimFunctions.R")
-source("TuningFunctions.R")
-source("PerformanceMetricsFunctions.R")
+source("RFunctions/DataSimFunctions.R")
+source("RFunctions/TuningFunctions.R")
+source("RFunctions/PerformanceMetricsFunctions.R")
 
 job_id <- job_args[1] %>% as.numeric()
 
@@ -18,8 +21,8 @@ start_seed <- job_id*100
 set.seed(start_seed)
 
 # load in scenario + coef
-load("DGM_data/scenarios.RData")
-load("DGM_data/betas.RData")
+load("DGM/Data/scenarios.RData")
+load("DGM/Data/betas.RData")
 
 selected_scenario <- ifelse(job_id %% 12 == 0, 12, job_id %% 12)
 
@@ -190,7 +193,7 @@ for (metric in metrics) {
 
 ##### Save #####
 
-filename <- paste0("Study2/Data/sim/study2_run", job_id, ".rds")
+filename <- paste0("Study2/Data/perfs/study2_run", job_id, ".rds")
 saveRDS(out, file = filename)
 
 if ((ceiling(job_id / 12) %% 10) == 0) {
