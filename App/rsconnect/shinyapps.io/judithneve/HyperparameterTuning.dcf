@@ -1,0 +1,14 @@
+name: HyperparameterTuning
+title: HyperparameterTuning
+username:
+account: judithneve
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8933434
+bundleId: 7182146
+url: https://judithneve.shinyapps.io/HyperparameterTuning/
+when: 1683377610.77063
+lastSyncTime: 1683377610.77147
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: MakeAppData.Rmd
