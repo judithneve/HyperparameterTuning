@@ -15,124 +15,245 @@ This is not possible as of yet: some required files have not yet been uploaded. 
 ## Folder structure
 
 HyperparameterTuning/
+
 |-- .gitignore                 - Specifies files and directories to be ignored by Git
+
 |-- LICENSE                    - License file for the project
+
 |-- README.md                  - Readme file containing information about the project
+
 |-- HyperparameterTuning.RProj - RStudio project file for the project
+
 |-- App/
+
 |   |-- MakeAppData.Rmd - R Markdown file for creating appdata.RData | creates: appdata.RData | calls: all files in Study1/Data/perfs/, Study2/Data/perfs/, Study3/Data/perfs/
+
 |   |-- app.R           - R file containing the main code for the app | calls: appdata.RData
+
 |   |-- appdata.RData   - R data file including all data and functions necessary for the app
-|   ???-- rsconnect/
-|       ???-- shinyapps.io/
-|           ???-- judithneve/
-|               ???-- HyperparameterTuning.dcf - Configuration file for deploying the app on shinyapps.io
+
+|   --- rsconnect/
+
+|       --- shinyapps.io/
+
+|           --- judithneve/
+
+|               --- HyperparameterTuning.dcf - Configuration file for deploying the app on shinyapps.io
+
 |-- DGM/
+
 |   |-- Code/
-|   |   ???-- DGMFunctions.R - Helper functions and main functions for estimating coefficients used in the data generation
+
+|   |   --- DGMFunctions.R - Helper functions and main functions for estimating coefficients used in the data generation
+
 |   |-- Data/
+
 |   |   |-- betas.RData            - R data file containing the matrix of coefficients for each scenario
+
 |   |   |-- betas_validation.RData - R data file containing information on the performance of the selected coefficients
-|   |   ???-- scenarios.RData        - R data file containing the full information on scenarios (including sample size)
+
+|   |   --- scenarios.RData        - R data file containing the full information on scenarios (including sample size)
+
 |   |-- DGM_scenarios_betas.Rmd             - R script generating scenarios and coefficients for each scenario | creates: all files in DGM/Data/, DGM_scenarios_betas_sessionInfo.txt | calls: Code/DGMFunctions.R, RFunctions/DataSimFunctions.R
-|   ???-- DGM_scenarios_betas_sessionInfo.txt - text file detailing R and R package versions used in the scenario and coefficient computation
+
+|   --- DGM_scenarios_betas_sessionInfo.txt - text file detailing R and R package versions used in the scenario and coefficient computation
+
 |-- Proposal/
+
 |   |-- Fig1.Rmd                             - R code to generate figure 1 in the proposal | creates: figure.jpg
+
 |   |-- Thesis.bib                           - Proposal bibliography file
+
 |   |-- ThesisProposal_JudithNeve_MSBBSS.pdf - Rendered version of the proposal
+
 |   |-- ThesisProposal_JudithNeve_MSBBSS.tex - LaTeX code to write the proposal | creates: ThesisProposal_JudithNeve_MSBBSS.pdf | calls: figure.jpg
-|   ???-- figure1.jpg                          - Proposal figure
+
+|   --- figure1.jpg                          - Proposal figure
+
 |-- Protocol/
+
 |   |-- Protocol figures/
+
 |   |   |-- 000011.png            - Protocol figure
-|   |   ???-- figure1.jpg           - Protocol figure
+
+|   |   --- figure1.jpg           - Protocol figure
+
 |   |-- Protocol_presentation.pdf - Rendered version of a presentation given at the Julius Centrum's method meeting on Nov. 14, 2022
+
 |   |-- Simulation_protocol.pdf   - Rendered version of the simulation protocol (acting as a pre-registration)
+
 |   |-- Protocol_presentation.tex - LaTeX code to create Protocol_presentation.pdf
-|   ???-- Simulation_protocol.tex   - LaTeX code to create Simulation_protocol.pdf
+
+|   --- Simulation_protocol.tex   - LaTeX code to create Simulation_protocol.pdf
+
 |-- RFunctions/
+
 |   |-- DataSimFunctions.R            - Helper functions and main functions used to simulate datasets
+
 |   |-- PerformanceMetricsFunctions.R - Helper functions and main functions used to assess the predictive performance of a model
-|   ???-- TuningFunctions.R             - Helper functions and main functions used to tune random forests
+
+|   --- TuningFunctions.R             - Helper functions and main functions used to tune random forests
+
 |-- Report/ - Final report
+
 |   |-- CombineTitlePageReport.R                    - R code to combine the title page and the report in one pdf | creates: RM_Thesis_JudithNeve_0070661.pdf | calls: TitlePage.pdf, Report.pdf
+
 |   |-- RM_Thesis_JudithNeve_0070661.pdf            - pdf file containing the report and the title page
+
 |   |-- RM_Thesis_JudithNeve_0070661_COMPRESSED.pdf - pdf file containing the report and the title page, compressed to under 2Mb
+
 |   |-- Report.Rmd                                  - R code compiling the report | creates: Report.pdf | calls: WileyNJD-AMA.bst, WileyNJD-v2.cls, bibliography.bib, DGM/Data/scenarios.RData, DGM/Data/betas_validation.RData, Study1/Output/results.RData, Study2/Output/results.RData, Study3/Output/results.RData, Study1/Output/plot_ef5.pdf, Study2/Output/plot_ef5.pdf, Study3/Output/plot_ef5.pdf
+
 |   |-- Report.pdf                                  - Rendered version of the report
+
 |   |-- SupplementaryMaterials.Rmd                  - R code compiling the supplementary materials | creates: SupplementaryMaterials.pdf | calls: Study1/Output/results.RData, Study2/Output/results.RData, Study3/Output/results.RData, Study1/Output/plot_ef1.pdf, Study2/Output/plot_ef1.pdf, Study3/Output/plot_ef1.pdf, Study1/Output/plot_ef3.pdf, Study2/Output/plot_ef3.pdf, Study3/Output/plot_ef3.pdf
+
 |   |-- SupplementaryMaterials.pdf                  - Rendered version of the supplementary materials
+
 |   |-- TitlePage.pdf                               - Rendered version of the title page
+
 |   |-- TitlePage.tex                               - LaTeX code generating the title page | creates: TitlePage.pdf
+
 |   |-- WileyNJD-AMA.bst                            - Formatting file for the report
+
 |   |-- WileyNJD-v2.cls                             - Formatting file for the report
-|   ???-- bibliography.bib                            - Bibliography file for the report
+
+|   --- bibliography.bib                            - Bibliography file for the report
+
 |-- ResearchReport/ - Mid-way report
+
 |   |-- Data/
+
 |   |   |-- betas.RData      - R data file containing the matrix of coefficients for each scenario (as used for the research report)
+
 |   |   |-- pilot.RData      - R data file containing the simulation results used in the research report
-|   |   ???-- scenarios.RData  - R data file containing the full information on scenarios (as used for the research report)
+
+|   |   --- scenarios.RData  - R data file containing the full information on scenarios (as used for the research report)
+
 |   |-- DataSimFunctions.R   - Helper functions and main functions used to simulate datasets (as used for the research report)
+
 |   |-- GenerateBetas_RR.R   - Helper functions and main functions for estimating coefficients used in the data generation (as used for the research report)
+
 |   |-- PerformanceMetrics.R - Helper functions and main functions used to assess the predictive performance of a model (as used for the research report)
+
 |   |-- ResearchReport.Rmd   - R code compiling the research report | creates: ResearchReport.pdf | calls: Thesis.bib, GenerateBetas_RR.R, DataSimFunctions.R, TuningFunctions.R, all files in Data/
+
 |   |-- ResearchReport.pdf   - Rendered version of the research report
+
 |   |-- Study1_pilot.Rmd     - R code generating the simulated data | creates: Data/pilot.RData | calls: Data/betas.RData, Data/scenarios.RData, DataSimFunctions.R, GenerateBetas_RR.R, PerformanceMetrics.R, TuningFunctions.R
+
 |   |-- Thesis.bib           - Bibliography file for the research report
+
 |   |-- TuningFunctions.R    - Helper functions and main functions used to tune random forests (as used for the research report)
+
 |   |-- sessionInfo.R        - R code generating a file containing R and package information | creates: sessionInfo.txt
-|   ???-- sessionInfo.txt      - Text file detailing R version and package version used for the research report
+
+|   --- sessionInfo.txt      - Text file detailing R version and package version used for the research report
+
 |-- Study1/
+
 |   |-- Code/
+
 |   |   |-- CalPlotCoords.R           - R code generating coordinates used for the Study 1 calibration plots | runs through slurm | creates: all files in Study1/Data/coords/ | calls: all files in Study1/Data/preds/
+
 |   |   |-- GenerateCalibrationPlot.R - R code generating calibration plots for Study 1 | creates: all pdf files in Study1/Output/ | calls: all files in Study1/Data/coords/
+
 |   |   |-- Study1_execute.R          - R code generating observations for Study 1 | runs through slurm | creates: all files in Study1/Data/perfs/, all files in Study1/Data/preds/ | calls: all files in RFunctions/, DGM/Data/scenarios.RData, DGM/Data/betas.RData
+
 |   |   |-- Study1_results.Rmd        - R code generating summary statistics and plots for Study 1 | creates: Study1/Output/results.RData | calls: all files in Study1/Data/perfs/
+
 |   |   |-- study1_calplot.sh         - Shell file to obtain all calibration plot coordinates in Study 1 | runs through slurm | calls: CalPlotCoords.R
+
 |   |   |-- study1_16pred.sh          - Shell file to obtain all observations with 16 predictors in Study 1 | runs through slurm | calls: Study1_execute.R
+
 |   |   |-- study1_16pred_failed.sh   - Shell file to obtain all failed jobs with 16 predictors in Study 1 | runs through slurm | calls: Study1_execute.R
+
 |   |   |-- study1_16pred_failed2.sh  - Shell file to obtain jobs which failed twice with 16 predictors in Study 1 | runs through slurm | calls: Study1_execute.R
-|   |   ???-- study1_8pred.sh           - Shell file to obtain all observations with 8 predictors in Study 1 | runs through slurm | calls: Study1_execute.R
+
+|   |   --- study1_8pred.sh           - Shell file to obtain all observations with 8 predictors in Study 1 | runs through slurm | calls: Study1_execute.R
+
 |   |-- Data/
+
 |   |   |-- coords/ - Folder containing all Study 1 RDS files used to generate the calibration plots
+
 |   |   |-- perfs/  - Folder containing all Study 1 RDS files containing the performance of tuning procedures on one dataset
-|   |   ???-- preds/  - Folder containing all Study 1 RDS files containing predicted risk and the observed values
+
+|   |   --- preds/  - Folder containing all Study 1 RDS files containing predicted risk and the observed values
+
 |   |-- Output/
+
 |   |   |-- plot_ef1.pdf   - Calibration plots for all scenarios with an event fraction of 0.1 in Study 1
+
 |   |   |-- plot_ef3.pdf   - Calibration plots for all scenarios with an event fraction of 0.3 in Study 1
+
 |   |   |-- plot_ef5.pdf   - Calibration plots for all scenarios with an event fraction of 0.5 in Study 1
-|   |   ???-- results.RData  - R Data file containing tables and figures presented in the final report
+
+|   |   --- results.RData  - R Data file containing tables and figures presented in the final report
+
 |-- Study2/
+
 |   |-- Code/
+
 |   |   |-- CalPlotCoords.R           - R code generating coordinates used for the Study 2 calibration plots | creates: all files in Study2/Data/coords/ | calls: all files in Study2/Data/preds/
+
 |   |   |-- GenerateCalibrationPlot.R - R code generating calibration plots for Study 2 | creates: all pdf files in Study2/Output/ | calls: all files in Study2/Data/coords/
+
 |   |   |-- Study2_execute.R          - R code generating observations for Study 2 | runs through slurm | creates: all files in Study2/Data/perfs/, all files in Study2/Data/preds/ | calls: all files in RFunctions/, DGM/Data/scenarios.RData, DGM/Data/betas.RData
+
 |   |   |-- Study2_results.Rmd        - R code generating summary statistics and plots for Study 2 | creates: Study2/Output/results.RData | calls: all files in Study2/Data/perfs/
+
 |   |   |-- study2.sh                 - Shell file to obtain all observations in Study 2 | runs through slurm | calls: Study2_execute.R
-|   |   ???-- study2_failed.sh          - Shell file to obtain all failed observations in Study 2 | runs through slurm | calls: Study2_execute.R
+
+|   |   --- study2_failed.sh          - Shell file to obtain all failed observations in Study 2 | runs through slurm | calls: Study2_execute.R
+
 |   |-- Data/
+
 |   |   |-- coords/ - Folder containing all Study 2 RDS files used to generate the calibration plots
+
 |   |   |-- perfs/  - Folder containing all Study 2 RDS files containing the performance of tuning procedures on one dataset
-|   |   ???-- preds/  - Folder containing all Study 2 RDS files containing predicted risk and the observed values
+
+|   |   --- preds/  - Folder containing all Study 2 RDS files containing predicted risk and the observed values
+
 |   |-- Output/
+
 |   |   |-- plot_ef1.pdf   - Calibration plots for all scenarios with an event fraction of 0.1 in Study 2
+
 |   |   |-- plot_ef3.pdf   - Calibration plots for all scenarios with an event fraction of 0.3 in Study 2
+
 |   |   |-- plot_ef5.pdf   - Calibration plots for all scenarios with an event fraction of 0.5 in Study 2
-|   |   ???-- results.RData  - R Data file containing tables and figures presented in the final report
-???-- Study3/
+
+|   |   --- results.RData  - R Data file containing tables and figures presented in the final report
+
+--- Study3/
+
     |-- Code/
+
     |   |-- CalPlotCoords.R           - R code generating coordinates used for the Study 3 calibration plots | creates: all files in Study3/Data/coords/ | calls: all files in Study3/Data/preds/
+
     |   |-- GenerateCalibrationPlot.R - R code generating calibration plots for Study 3 | creates: all pdf files in Study3/Output/ | calls: all files in Study3/Data/coords/
+
     |   |-- Study3_execute.R          - R code generating observations for Study 3 | runs through slurm | creates: all files in Study3/Data/perfs/, all files in Study3/Data/preds/ | calls: all files in RFunctions/, DGM/Data/scenarios.RData, DGM/Data/betas.RData
+
     |   |-- Study3_results.Rmd        - R code generating summary statistics and plots for Study 3 | creates: Study3/Output/results.RData | calls: all files in Study3/Data/perfs/
+
     |   |-- study3.sh                 - Shell file to obtain all observations in Study 3 | runs through slurm | calls: Study3_execute.R
-    |   ???-- study3_failed.sh          - Shell file to obtain all failed observations in Study 3 | runs through slurm | calls: Study3_execute.R
+
+    |   --- study3_failed.sh          - Shell file to obtain all failed observations in Study 3 | runs through slurm | calls: Study3_execute.R
+
     |-- Data/
+
     |   |-- coords/ - Folder containing all Study 3 RDS files used to generate the calibration plots
+
     |   |-- perfs/  - Folder containing all Study 3 RDS files containing the performance of tuning procedures on one dataset
-    |   ???-- preds/  - Folder containing all Study 3 RDS files containing predicted risk and the observed values
-    ???-- Output/
+
+    |   --- preds/  - Folder containing all Study 3 RDS files containing predicted risk and the observed values
+
+    --- Output/
+
         |-- plot_ef1.pdf   - Calibration plots for all scenarios with an event fraction of 0.1 in Study 3
+
         |-- plot_ef3.pdf   - Calibration plots for all scenarios with an event fraction of 0.3 in Study 3
+
         |-- plot_ef5.pdf   - Calibration plots for all scenarios with an event fraction of 0.5 in Study 3
-        ???-- results.RData  - R Data file containing tables and figures presented in the final report
+
+        --- results.RData  - R Data file containing tables and figures presented in the final report
