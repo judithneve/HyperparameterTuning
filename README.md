@@ -1,6 +1,6 @@
 # Performance of clinical prediction models versus computational time for random forest hyperparameter tuning procedures: A simulation study
 
-This project contains two reports: the research report (preliminary results - January 2023), and the report (full results - May 2023). All files (including generated data) required to reproduce results in full are present in this repository.
+This project contains two reports: the research report in the file ResearchReport/ResearchReport.pdf (preliminary results - January 2023), and the report in the file Report/Report.pdf, which has supplementary materials Report/SupplementaryMaterials.pdf (full results - May 2023). All files (including generated data) required to reproduce results in full are present in this repository.
 
 This study was granted ethical approval by Utrecht University's ethics committee. It is filed under number 22-1808. All data used was simulated and presents no privacy concerns.
 
