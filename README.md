@@ -2,7 +2,7 @@
 
 This project contains two reports: the research report (preliminary results - January 2023), and the report (full results - May 2023). All files (including generated data) required to reproduce results in full are present in this repository.
 
-This study was granted ethical approval by Utrecht University's ethics committee. It is filed under number 22-1808. All data used was simulated and presents not privacy concern.
+This study was granted ethical approval by Utrecht University's ethics committee. It is filed under number 22-1808. All data used was simulated and presents no privacy concerns.
 
 ## What to run?
 
@@ -10,7 +10,7 @@ This study was granted ethical approval by Utrecht University's ethics committee
 
 1. Run ResearchReport/Study1_pilot.Rmd. This will reproduce the data simulated for the preliminary results. Estimated runtime: 19 hours.
 
-2. Knit ResearchReport/ResearchReport.Rmd. This will use the data simulated for the preliminary results and produce the written report. Estimated runtime: 5 minutes.
+2. Knit ResearchReport/ResearchReport.Rmd. This will use the data simulated for the preliminary results and produce the written report (including figures and tables). Estimated runtime: 5 minutes.
 
 Notes:
 
@@ -22,25 +22,27 @@ Notes:
 
 1. Run DGM/DGM_scenarios_betas.Rmd. This will reproduce the specifications for the data simulation scenarios. Estimated runtime: 4 hours.
 
-2. a. Using slurm on a high performance computer, run Study1/Code/study1_8pred.sh, Study1/Code/study1_16pred.sh, Study2/Code/study2.sh, Study3/Code/study3.sh. The order does not matter. This will reproduce all data in the Data/preds/ and Data/perfs/ subfolders of Study1, Study2, Study3. Estimated runtime: 30 hours minimum (assuming everything starts running immediately).
+2. Using slurm on a high performance computer, run Study1/Code/study1_8pred.sh, Study1/Code/study1_16pred.sh, Study2/Code/study2.sh, Study3/Code/study3.sh. The order does not matter. This will reproduce all data in the Data/preds/ and Data/perfs/ subfolders of Study1, Study2, Study3. Estimated runtime: 30 hours minimum (assuming everything starts running immediately).
 
-2. b. Check which jobs timed out, modify the array argument in Study1/Code/study1_16pred_failed.sh, Study2/Code/study2_failed.sh, Study3/Code/study3_failed.sh accordingly, and run these files. Repeat until there are no timed out jobs. If Study1 16-predictor jobs fail again, modify Study1/Code/study1_16pred_failed2.sh instead.
+3. Check which jobs timed out, modify the array argument in Study1/Code/study1_16pred_failed.sh, Study2/Code/study2_failed.sh, Study3/Code/study3_failed.sh accordingly, and run these files. Repeat until there are no timed out jobs. If Study1 16-predictor jobs fail again, modify Study1/Code/study1_16pred_failed2.sh instead.
 
-3. Using slurm on a high performance computer, run Study1/Code/study1_calplot.sh. This will reproduce all data in Study1/Data/coords/. Estimated runtime: 6 hours.
+4. Using slurm on a high performance computer, run Study1/Code/study1_calplot.sh. This will reproduce all data in Study1/Data/coords/. Estimated runtime: 6 hours.
 
-4. Run Study2/Code/CalPlotCoords.R and Study3/Code/CalPlotCoords.R. This will reproduce all data in Study2/Data/coords/ and Study3/Data/coords/. Estimated runtime: 6 hours.
+5. Run Study2/Code/CalPlotCoords.R and Study3/Code/CalPlotCoords.R. This will reproduce all data in Study2/Data/coords/ and Study3/Data/coords/. Estimated runtime: 6 hours.
 
-5. Run Study1/Code/GenerateCalibrationPlot.R, Study2/Code/GenerateCalibrationPlot.R, Study3/Code/GenerateCalibrationPlot.R. This will reproduce all pdf files in Study1/Output/, Study2/Output/, Study3/Output/. Estimated runtime: 20 minutes.
+6. Run Study1/Code/GenerateCalibrationPlot.R, Study2/Code/GenerateCalibrationPlot.R, Study3/Code/GenerateCalibrationPlot.R. This will reproduce all pdf files in Study1/Output/, Study2/Output/, Study3/Output/. Estimated runtime: 20 minutes.
 
-6. Run Study1/Code/Results.Rmd, Study2/Code/Results.Rmd, Study3/Code/Results.Rmd. This will reproduce the Output/results.RData file in Study1, Study2, Study3. Estimated runtime: 15 minutes.
+7. Run Study1/Code/Results.Rmd, Study2/Code/Results.Rmd, Study3/Code/Results.Rmd. This will reproduce the Output/results.RData file in Study1, Study2, Study3. Estimated runtime: 15 minutes.
 
-7. Knit Report/Report.Rmd and Report/SupplementaryMaterials.Rmd. This will reproduce the Report and Supplementary Materials pdf files. Estimated runtime: 10 minutes.
+8. Knit Report/Report.Rmd and Report/SupplementaryMaterials.Rmd. This will reproduce the Report and Supplementary Materials pdf files. Estimated runtime: 10 minutes.
 
-8. If desiring the title page, run Report/CombineTitlePageReport.R. This will add the title page in front of the report as in RM_Thesis_JudithNeve_0070661.pdf. Estimated runtime: 5 seconds.
+9. If desiring the title page, run Report/CombineTitlePageReport.R. This will add the title page in front of the report as in RM_Thesis_JudithNeve_0070661.pdf. Estimated runtime: 5 seconds.
 
 Notes:
 
-- This procedure assumes some knowledge of slurm commands and ability to modify shell files accordingly.
+- This procedure assumes basic knowledge of slurm commands and ability to modify shell files accordingly.
+
+- Shell files can be duplicated and modified to run smaller batches of data generation by modifying the array argument.
 
 - File dependencies are detailed in the folder structure.
 
@@ -48,9 +50,9 @@ Notes:
 
 - R version and package information (step 1): DGM_scenarios_betas_sessionInfo.txt
 
-- R version and package information (steps 2-3): HPC_sessionInfo.txt
+- R version and package information (steps 2-4): HPC_sessionInfo.txt
 
-- R version and package information (steps 4-8): analysis_sessionInfo.txt
+- R version and package information (steps 5-9): analysis_sessionInfo.txt
 
 ## Folder structure
 
@@ -138,7 +140,7 @@ HyperparameterTuning/
 
     |-- TuningFunctions.R             - Helper functions and main functions used to tune random forests
 
-|-- Report/ - Final report
+|-- Report/
 
     |-- CombineTitlePageReport.R                    - R code to combine the title page and the report in one pdf | creates: RM_Thesis_JudithNeve_0070661.pdf | calls: TitlePage.pdf, Report.pdf
 
@@ -164,7 +166,7 @@ HyperparameterTuning/
 
     |-- bibliography.bib                            - Bibliography file for the report
 
-|-- ResearchReport/ - Mid-way report
+|-- ResearchReport/
 
     |-- Data/
 
