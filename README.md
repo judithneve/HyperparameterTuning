@@ -1,58 +1,52 @@
-# Performance of clinical prediction models versus computational time for random forest hyperparameter tuning procedures: A simulation study
+# Research archive for: Performance of clinical prediction models versus computational time for random forest hyperparameter tuning procedures: A simulation study
 
-This project contains two reports: the research report in the file ResearchReport/ResearchReport.pdf (preliminary results - January 2023), and the report in the file Report/Report.pdf, which has supplementary materials Report/SupplementaryMaterials.pdf (full results - May 2023). All files (including generated data) required to reproduce results in full are present in this repository.
+This study was a three-part simulation study conducted in part on personal computers and in part on high-performance computers. We make clear which parts were run where in the "What to run?" section of this readme.
 
-This study was granted ethical approval by Utrecht University's ethics committee. It is filed under number 22-1808. All data used was simulated and presents no privacy concerns.
+This study was granted ethical approval by the FETC. It is filed under number 22-1808. All data used was simulated and presents no privacy concerns. The simulated data is present in this repository.
+
+This project is under an MIT license. For more detail, see the LICENSE file.
+
+## Permission and access
+
+The archive is available in full on GitHub: https://github.com/judithneve/HyperparameterTuning. It will remain publicly available.
+
+I, Judith Neve, am the sole person responsible for it. Please contact me at j.a.nevedemevergnies@students.uu.nl if you have any questions or remarks.
 
 ## What to run?
 
-### To reproduce the research report (preliminary results)
-
-1. Run ResearchReport/Study1_pilot.Rmd. This will reproduce the data simulated for the preliminary results. Estimated runtime: 19 hours.
-
-2. Knit ResearchReport/ResearchReport.Rmd. This will use the data simulated for the preliminary results and produce the written report (including figures and tables). Estimated runtime: 5 minutes.
-
-Notes:
-
-- R version and package information: ResearchReport/sessionInfo.txt
-
-- File dependencies are detailed in the folder structure.
-
-### To reproduce the study (full results)
-
-1. Run DGM/DGM_scenarios_betas.Rmd. This will reproduce the specifications for the data simulation scenarios. Estimated runtime: 4 hours.
+1. Personal computer. Run DGM/DGM_scenarios_betas.Rmd. This will reproduce the specifications for the data simulation scenarios. Estimated runtime: 4 hours.
 
 2. Using slurm on a high performance computer, run Study1/Code/study1_8pred.sh, Study1/Code/study1_16pred.sh, Study2/Code/study2.sh, Study3/Code/study3.sh. The order does not matter. This will reproduce all data in the Data/preds/ and Data/perfs/ subfolders of Study1, Study2, Study3. Estimated runtime: 30 hours minimum (assuming everything starts running immediately).
 
-3. Check which jobs timed out, modify the array argument in Study1/Code/study1_16pred_failed.sh, Study2/Code/study2_failed.sh, Study3/Code/study3_failed.sh accordingly, and run these files. Repeat until there are no timed out jobs. If Study1 16-predictor jobs fail again, modify Study1/Code/study1_16pred_failed2.sh instead.
+3. Using slurm, check which jobs timed out, modify the array argument in Study1/Code/study1_16pred_failed.sh, Study2/Code/study2_failed.sh, Study3/Code/study3_failed.sh accordingly, and run these files. Repeat until there are no timed out jobs. If Study1 16-predictor jobs fail again, modify Study1/Code/study1_16pred_failed2.sh instead.
 
 4. Using slurm on a high performance computer, run Study1/Code/study1_calplot.sh. This will reproduce all data in Study1/Data/coords/. Estimated runtime: 6 hours.
 
-5. Run Study2/Code/CalPlotCoords.R and Study3/Code/CalPlotCoords.R. This will reproduce all data in Study2/Data/coords/ and Study3/Data/coords/. Estimated runtime: 6 hours.
+5. Personal computer. Run Study2/Code/CalPlotCoords.R and Study3/Code/CalPlotCoords.R. This will reproduce all data in Study2/Data/coords/ and Study3/Data/coords/. Estimated runtime: 6 hours.
 
-6. Run Study1/Code/GenerateCalibrationPlot.R, Study2/Code/GenerateCalibrationPlot.R, Study3/Code/GenerateCalibrationPlot.R. This will reproduce all pdf files in Study1/Output/, Study2/Output/, Study3/Output/. Estimated runtime: 20 minutes.
+6. Personal computer. Run Study1/Code/GenerateCalibrationPlot.R, Study2/Code/GenerateCalibrationPlot.R, Study3/Code/GenerateCalibrationPlot.R. This will reproduce all pdf files in Study1/Output/, Study2/Output/, Study3/Output/. Estimated runtime: 20 minutes.
 
-7. Run Study1/Code/Results.Rmd, Study2/Code/Results.Rmd, Study3/Code/Results.Rmd. This will reproduce the Output/results.RData file in Study1, Study2, Study3. Estimated runtime: 15 minutes.
+7. Personal computer. Run Study1/Code/Results.Rmd, Study2/Code/Results.Rmd, Study3/Code/Results.Rmd. This will reproduce the Output/results.RData file in Study1, Study2, Study3. Estimated runtime: 15 minutes.
 
-8. Knit Report/Report.Rmd and Report/SupplementaryMaterials.Rmd. This will reproduce the Report and Supplementary Materials pdf files. Estimated runtime: 10 minutes.
+8. Personal computer. Knit Report/Report.Rmd and Report/SupplementaryMaterials.Rmd. This will reproduce the Report and Supplementary Materials pdf files, including all tables and figures using the files created in step 7. Any rendering of Report/Report.Rmd and Report/SupplementaryMaterials.Rmd with different data would produce different tables and figures. Estimated runtime: 10 minutes.
 
-9. If desiring the title page, run Report/CombineTitlePageReport.R. This will add the title page in front of the report as in RM_Thesis_JudithNeve_0070661.pdf. Estimated runtime: 5 seconds.
+9. Personal computer. If desiring the title page, run Report/CombineTitlePageReport.R. This will add the title page in front of the report as in RM_Thesis_JudithNeve_0070661.pdf. Estimated runtime: 5 seconds.
+
+10. Personal computer. The app can be recreated by running App/MakeAppData.Rmd, then App/app.R. Estimated runtime: 5 minutes.
 
 Notes:
 
-- This procedure assumes basic knowledge of slurm commands and ability to modify shell files accordingly.
-
 - Shell files can be duplicated and modified to run smaller batches of data generation by modifying the array argument.
 
-- File dependencies are detailed in the folder structure.
+- Exact file dependencies are detailed in the folder structure (later in this document).
 
 - Data will not replicate exactly due to runtime being a variable, which depends heavily on tasks being computed in parallel and varies on its own. Additionally, data may differ between operating systems. The high-performance computer used in this project contains two types of processors (Xeon Gold and Xeon E5) which responded differently to seeds.
 
-- R version and package information (step 1): DGM_scenarios_betas_sessionInfo.txt
+- R version and package information (step 1): DGM/DGM_scenarios_betas_sessionInfo.txt
 
-- R version and package information (steps 2-4): HPC_sessionInfo.txt
+- R version and package information (steps 2-4): HPC_requirements.txt
 
-- R version and package information (steps 5-9): analysis_sessionInfo.txt
+- R version and package information (steps 5-9): analysis_requirements.txt
 
 ## Folder structure
 
@@ -62,13 +56,15 @@ HyperparameterTuning/
 
 |-- LICENSE                    - License file for the project
 
-|-- README.md                  - Readme file containing information about the project
+|-- README.md                  - Readme file rendering the html file containing information about the project
+
+|-- README.html                - Readme file containing information about the project
 
 |-- HyperparameterTuning.RProj - RStudio project file for the project
 
-|-- HPC_sessionInfo.txt        - Text file detailing R and R package versions used in data simulation
+|-- HPC_requirements.txt       - Text file detailing R and R package versions used in data simulation
 
-|-- analysis_sessionInfo.txt   - Text file detailing R and R package versions used in data analysis
+|-- analysis_requirements.txt  - Text file detailing R and R package versions used in data analysis
 
 |-- App/
 
@@ -104,34 +100,6 @@ HyperparameterTuning/
 
     |-- DGM_scenarios_betas_sessionInfo.txt - Text file detailing R and R package versions used in the scenario and coefficient computation
 
-|-- Proposal/
-
-    |-- Fig1.Rmd                             - R code to generate figure 1 in the proposal | creates: figure1.jpg
-
-    |-- Thesis.bib                           - Proposal bibliography file
-
-    |-- ThesisProposal_JudithNeve_MSBBSS.pdf - Rendered version of the proposal
-
-    |-- ThesisProposal_JudithNeve_MSBBSS.tex - LaTeX code to write the proposal | creates: ThesisProposal_JudithNeve_MSBBSS.pdf | calls: figure1.jpg
-
-    |-- figure1.jpg                          - Proposal figure
-
-|-- Protocol/
-
-    |-- Protocol figures/
-
-        |-- 000011.png            - Protocol figure
-
-        |-- figure1.jpg           - Protocol figure
-
-    |-- Protocol_presentation.pdf - Rendered version of a presentation given at the Julius Centrum's method meeting on Nov. 14, 2022
-
-    |-- Simulation_protocol.pdf   - Rendered version of the simulation protocol (acting as a pre-registration)
-
-    |-- Protocol_presentation.tex - LaTeX code to create Protocol_presentation.pdf
-
-    |-- Simulation_protocol.tex   - LaTeX code to create Simulation_protocol.pdf
-
 |-- RFunctions/
 
     |-- DataSimFunctions.R            - Helper functions and main functions used to simulate datasets
@@ -165,36 +133,6 @@ HyperparameterTuning/
     |-- WileyNJD-v2.cls                             - Formatting file for the report
 
     |-- bibliography.bib                            - Bibliography file for the report
-
-|-- ResearchReport/
-
-    |-- Data/
-
-        |-- betas.RData      - R data file containing the matrix of coefficients for each scenario (as used for the research report)
-
-        |-- pilot.RData      - R data file containing the simulation results used in the research report
-
-        |-- scenarios.RData  - R data file containing the full information on scenarios (as used for the research report)
-
-    |-- DataSimFunctions.R   - Helper functions and main functions used to simulate datasets (as used for the research report)
-
-    |-- GenerateBetas_RR.R   - Helper functions and main functions for estimating coefficients used in the data generation (as used for the research report)
-
-    |-- PerformanceMetrics.R - Helper functions and main functions used to assess the predictive performance of a model (as used for the research report)
-
-    |-- ResearchReport.Rmd   - R code compiling the research report | creates: ResearchReport.pdf | calls: Thesis.bib, GenerateBetas_RR.R, DataSimFunctions.R, TuningFunctions.R, all files in Data/
-
-    |-- ResearchReport.pdf   - Rendered version of the research report
-
-    |-- Study1_pilot.Rmd     - R code generating the simulated data | creates: Data/pilot.RData | calls: Data/betas.RData, Data/scenarios.RData, DataSimFunctions.R, GenerateBetas_RR.R, PerformanceMetrics.R, TuningFunctions.R
-
-    |-- Thesis.bib           - Bibliography file for the research report
-
-    |-- TuningFunctions.R    - Helper functions and main functions used to tune random forests (as used for the research report)
-
-    |-- sessionInfo.R        - R code generating a file containing R and package information | creates: sessionInfo.txt
-
-    |-- sessionInfo.txt      - Text file detailing R version and package version used for the research report
 
 |-- Study1/
 
