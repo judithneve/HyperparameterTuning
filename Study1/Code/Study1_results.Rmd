@@ -260,8 +260,8 @@ summary_table_study1 <- df %>%
             Calslope_IQR = round(IQR(CalSlope), 2),
             #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
             `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
-            Runtime_mean = round(mean(time), 1),
-            Runtime_sd = round(sd(time), 1))
+            Runtime_mean = round(mean(time), 2),
+            Runtime_sd = round(sd(time), 2))
 ```
 
 ```{r}
@@ -275,8 +275,8 @@ summary_table_study1_sc <- df %>%
             Calslope_IQR = round(IQR(CalSlope), 2),
             #Accuracy = paste0(round(mean(Accuracy),2), " (", round(sd(Accuracy), 2), ")"),
             `RMSD(slope)` = round(sqrt(mean((log(CalSlope))^2)), 2),
-            Runtime_mean = round(mean(time), 1),
-            Runtime_sd = round(sd(time), 1))
+            Runtime_mean = round(mean(time), 2),
+            Runtime_sd = round(sd(time), 2))
 ```
 
 # Save the relevant plots and figures

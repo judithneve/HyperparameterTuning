@@ -275,6 +275,7 @@ Balancing predictive performance and computational time, we select `mtry` and `m
 plot_ex_met +
   theme(plot.margin = unit(c(0.5, 1, 0.5, 0.5), "lines"),
         legend.position = c(0.77, 0.1))
+# ggsave("./../Study1/Output/study1fig.pdf", height = 8, width = 6)
 ```
 
 ```{r, fig.cap="Calibration plots comparing hyperparameter combinations for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s1calplot}", out.width="100%", fig.pos = "!p"}
@@ -345,6 +346,7 @@ There is no "optimal" optimisation criterion balancing computational time and pr
 
 ```{r, fig.cap="Performance of each optimisation criterion in the example scenario where $p$ = 16, $EF$ = 0.5, $n$ = 1$N$. Red dotted lines show ideal performance.\\label{fig:study2fig}", fig.height=8, fig.width=6, fig.pos = "!p"}
 plot_ex_met
+# ggsave("./../Study2/Output/study2fig.pdf", height = 8, width = 6)
 ```
 
 ```{r, fig.cap="Calibration plots comparing optimisation criteria for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s2calplot}", out.width="100%", fig.pos = "!p"}
@@ -353,6 +355,7 @@ knitr::include_graphics("./../Study2/Output/plot_ef5.pdf")
 
 ```{r, fig.cap="Comparison of performance where the optimisation criterion uses the performance metric to performance where the optimisation criterion does not use the performance metric. Red dotted lines show ideal performance.\\label{fig:study2extra}", fig.height=6, fig.width=6, fig.pos = "!p"}
 plot_ex_same
+# ggsave("./../Study2/Output/study2extra.pdf", height = 8, width = 6)
 ```
 
 ## Study 3: Hyperparameter search algorithms
@@ -415,10 +418,12 @@ tab %>%
 
 ```{r, fig.cap="Comparison of runtimes for the hyperparameter search algorithms between scenarios.\\label{fig:s3time}", fig.height=8, fig.width=6, fig.pos = "!p"}
 per_scenario_runtime
+# ggsave("./../Study3/Output/s3time.pdf", height = 8, width = 6)
 ```
 
 ```{r, fig.cap="Performance of each hyperparameter search algorithm in the example scenario where $p$ = 16, $EF$ = 0.5, $n$ = 1$N$. Red dotted lines show ideal performance.\\label{fig:study3fig}", fig.height=8, fig.width=6, fig.pos = "!p"}
 plot_ex_met
+# ggsave("./../Study3/Output/study3fig.pdf", height = 8, width = 6)
 ```
 
 ```{r, fig.cap="Calibration plots comparing hyperparameter search algorithms for every tenth dataset in scenarios where $EF$ = 0.5.\\label{fig:s3calplot}", out.width="100%", fig.pos = "!p"}
